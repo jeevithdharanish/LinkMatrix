@@ -1,20 +1,30 @@
-// import {Event} from '@/models/Event';
-// import mongoose from "mongoose";
-// export async function POST(req) {
-//     mongoose.connect(process.env.MONGO_URI);
-//     const url = new URL(req.url);
-//     const clickedLink = atob(url.searchParams.get('url'));
-//     const page = url.searchParams.get('page');
-//     await Event.create({type:'click', uri: clickedLink, page});
-//     return Response.json(true);
-// }
-import {Event} from '@/models/Event';
+import { Event } from '@/models/Event';
+import { Page } from '@/models/page';
 import mongoose from "mongoose";
+
 export async function POST(req) {
-  mongoose.connect(process.env.MONGO_URI);
+  await mongoose.connect(process.env.MONGO_URI);
+  
   const url = new URL(req.url);
   const clickedLink = atob(url.searchParams.get('url'));
-  const page = url.searchParams.get('page');
-  await Event.create({type:'click', uri: clickedLink, page});
+  const pageUri = url.searchParams.get('page');
+
+  // Find the page
+  const page = await Page.findOne({ uri: pageUri });
+
+  // Find the link in the page's links array
+  const clickedLinkData = page.links.find(link => link.url === clickedLink);
+
+  // Use the title if found, otherwise use "Deleted Link"
+  const linkTitle = clickedLinkData ? clickedLinkData.title : "Deleted Link";
+
+  // Save the event with the title
+  await Event.create({
+    type: 'click',
+    uri: clickedLink,
+    page: pageUri,
+    title: linkTitle,  // Save the title for deleted links
+  });
+
   return Response.json(true);
 }

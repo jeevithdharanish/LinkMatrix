@@ -1,20 +1,3 @@
-// import LoginWithGoogle from "@/components/buttons/LoginWithGoogle";
-
-// export default function LoginPage(){
-//     return(
-//         <div >
-//           <div className="bg-white border p-4 max-w-xs mx-auto">
-//               <h1 className="text-4xl font-bold text-center mb-6">
-//                   Sign in
-//               </h1>
-//               <p className="text-center mb-6">
-//                   Sign in to your account
-//               </p>
-//           <LoginWithGoogle/>
-//           </div>
-//         </div>
-//     );
-// }
 import LoginWithGoogle from "@/components/buttons/LoginWithGoogle";
 
 export default function LoginPage() {

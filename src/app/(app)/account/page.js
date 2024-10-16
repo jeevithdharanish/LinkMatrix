@@ -7,6 +7,7 @@ import {Page} from "@/models/page";
 import mongoose from "mongoose";
 import {getServerSession} from "next-auth";
 import {redirect} from "next/navigation";
+import cloneDeep from 'clone-deep';
 
 export default async function AccountPage({searchParams}) {
   const session = await getServerSession(authOptions);
@@ -14,20 +15,17 @@ export default async function AccountPage({searchParams}) {
   if (!session) {
     return redirect('/');
   }
-  await mongoose.connect(process.env.MONGO_URI);
-  
-  // Use `lean()` to avoid needing to call `.toJSON()`
-  const page = await Page.findOne({owner: session?.user?.email}).lean();
+  mongoose.connect(process.env.MONGO_URI);
+  const page = await Page.findOne({owner: session?.user?.email});
 
+  const leanPage = cloneDeep(page.toJSON());
+  leanPage._id = leanPage._id.toString();
   if (page) {
-    // Convert `_id` to string
-    page._id = page._id.toString();
-    
     return (
       <>
-        <PageSettingsForm page={page} user={session.user} />
-        <PageButtonsForm page={page} user={session.user} />
-        <PageLinksForm page={page} user={session.user} />
+        <PageSettingsForm page={leanPage} user={session.user} />
+        <PageButtonsForm page={leanPage} user={session.user} />
+        <PageLinksForm page={leanPage} user={session.user} />
       </>
     );
   }
