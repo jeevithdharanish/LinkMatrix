@@ -1,8 +1,9 @@
 'use server';
 import {authOptions} from "@/app/api/auth/[...nextauth]/route";
-import {Page} from "@/models/page";
+
 import mongoose from "mongoose";
 import {getServerSession} from "next-auth";
+import { Page } from '@/models/page';
 
 export default async function grabUsername({username}) {
   
@@ -12,7 +13,7 @@ export default async function grabUsername({username}) {
   if (existingPageDoc) {
     return false;
   } 
-    
+   
   const session = await getServerSession(authOptions);
   const newPage= await Page.create({
       uri:username,

@@ -3,7 +3,6 @@
 import { addDays, differenceInDays, formatISO9075, parseISO } from 'date-fns';
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ResponsiveContainer,

@@ -5,12 +5,9 @@ import SubmitButton from "@/components/buttons/SubmitButton";
 import SectionBox from "@/components/layout/SectionBox";
 import { ReactSortable } from "react-sortablejs";
 import {
-  faDiscord,
   faFacebook,
   faGithub,
   faInstagram,
-  faTelegram,
-  faWhatsapp,
   faYoutube,
   faLinkedin
 } from "@fortawesome/free-brands-svg-icons";

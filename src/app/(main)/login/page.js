@@ -43,27 +43,27 @@
 
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import toast from 'react-hot-toast';
-import Link from 'next/link';
+// import { useState } from 'react';
+// import { signIn } from 'next-auth/react';
+// import toast from 'react-hot-toast';
+// import Link from 'next/link';
 import LoginWithGoogle from "@/components/buttons/LoginWithGoogle";
 
 export default function LoginPage({ searchParams }) {
   const desiredUsername = searchParams?.username;
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loginInProgress, setLoginInProgress] = useState(false);
+  // const [email, setEmail] = useState('');
+  // const [password, setPassword] = useState('');
+  // const [loginInProgress, setLoginInProgress] = useState(false);
 
-  async function handleFormSubmit(ev) {
-    ev.preventDefault();
-    setLoginInProgress(true);
+  // async function handleFormSubmit(ev) {
+  //   ev.preventDefault();
+  //   setLoginInProgress(true);
 
-    await signIn('credentials', { email, password, callbackUrl: '/account' });
+  //   await signIn('credentials', { email, password, callbackUrl: '/account' });
 
-    setLoginInProgress(false);
-  }
+  //   setLoginInProgress(false);
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">

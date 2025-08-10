@@ -78,12 +78,11 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import AppSidebar from "@/components/layout/AppSideBar";
 import { Page } from "@/models/page";
-import { faBars, faLink } from "@fortawesome/free-solid-svg-icons";
+import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 
