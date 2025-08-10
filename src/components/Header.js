@@ -78,7 +78,7 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link href={'/login'} className="hover:text-blue-500 transition duration-200 font-medium">Sign In</Link>
+              <Link href={'/main/login'} className="hover:text-blue-500 transition duration-200 font-medium">Sign In</Link>
               {/* <Link href={'/register'} className="hover:text-blue-500 transition duration-200 font-medium">
                 <span className="bg-blue-500 text-white py-2 px-4 rounded-lg transition duration-200 hover:bg-blue-600 font-semibold">Create Account</span>
               </Link> */}
