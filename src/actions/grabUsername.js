@@ -4,17 +4,21 @@ import {Page} from "@/models/page";
 import mongoose from "mongoose";
 import {getServerSession} from "next-auth";
 
-export default async function grabUsername(formData) {
-  const username = formData.get('username');
-  mongoose.connect(process.env.MONGO_URI);
+export default async function grabUsername({username}) {
+  
+  await mongoose.connect(process.env.MONGO_URI);
+
   const existingPageDoc = await Page.findOne({uri:username});
   if (existingPageDoc) {
     return false;
-  } else {
-    const session = await getServerSession(authOptions);
-    return await Page.create({
+  } 
+    
+  const session = await getServerSession(authOptions);
+  const newPage= await Page.create({
       uri:username,
       owner:session?.user?.email,
     });
-  }
+
+    return {seccess:true,uri:newPage.uri};
+  
 }

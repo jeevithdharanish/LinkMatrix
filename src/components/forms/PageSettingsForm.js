@@ -24,14 +24,32 @@ export default function PageSettingsForm({page, user}) {
   }
 
   async function handleCoverImageChange(ev) {
-    await upload(ev, link => {
+    await upload(ev, async (link) => {
       setBgImage(link);
+      // Auto-save the background image
+      const formData = new FormData();
+      formData.set('bgImage', link);
+      const result = await savePageSettings(formData);
+      if (result) {
+        toast.success('Background image updated!');
+        // Refresh the page to show the new image
+        window.location.reload();
+      }
     });
   }
   
   async function handleAvatarImageChange(ev) {
-    await upload(ev, link => {
+    await upload(ev, async (link) => {
       setAvatar(link);
+      // Auto-save the avatar
+      const formData = new FormData();
+      formData.set('avatar', link);
+      const result = await savePageSettings(formData);
+      if (result) {
+        toast.success('Avatar updated!');
+        // Refresh the page to show the new image
+        window.location.reload();
+      }
     });
   }
 
@@ -101,6 +119,9 @@ export default function PageSettingsForm({page, user}) {
               </label>
               <input onChange={handleAvatarImageChange} id="avatarIn" type="file" className="hidden"/>
               <input type="hidden" name="avatar" value={avatar}/>
+              <div className="absolute bottom-0 -right-12 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+                {avatar ? 'Change image' : 'Add image'}
+              </div>
             </div>
           </div>
           <div className="p-0">

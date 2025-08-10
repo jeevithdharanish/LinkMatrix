@@ -8,8 +8,13 @@ const nextConfig = {
             {
                 hostname:'linkmatrix.s3.amazonaws.com',
             },
+            {
+                hostname:'linkmatrix.s3.ap-south-1.amazonaws.com',
+            },
             ],
     }
 };
 
 export default nextConfig;
+
+

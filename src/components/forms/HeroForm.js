@@ -1,21 +1,10 @@
 'use client';
 
-import {signIn} from "next-auth/react";
-import {redirect, useRouter} from "next/navigation";
-import {useEffect} from "react";
+import {useRouter} from "next/navigation";
 
 export default function HeroForm({user}) {
   const router = useRouter();
-  useEffect(() => {
-    if (
-      'localStorage' in window
-      && window.localStorage.getItem('desiredUsername')
-    ) {
-      const username = window.localStorage.getItem('desiredUsername');
-      window.localStorage.removeItem('desiredUsername');
-      redirect('/account?desiredUsername=' + username);
-    }
-  }, []);
+
   async function handleSubmit(ev) {
     ev.preventDefault();
     const form = ev.target;
@@ -26,27 +15,51 @@ export default function HeroForm({user}) {
         router.push('/account?desiredUsername='+username);
       } else {
         window.localStorage.setItem('desiredUsername', username);
-        await signIn('google');
+        router.push(`/login?username=${encodeURIComponent(username)}`);
       }
     }
   }
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="inline-flex items-center shadow-lg bg-white shadow-gray-500/20">
-          <span className="bg-white py-4 pl-4">
-            linklist.to/
-          </span>
-      <input
-        type="text"
-        className=""
-        style={{backgroundColor:'white',marginBottom:0,paddingLeft:0}}
-        placeholder="username"/>
-      <button
-        type="submit"
-        className="bg-blue-500 text-white py-4 px-6 whitespace-nowrap">
-        Join for Free
-      </button>
-    </form>
+    <div>
+      <form
+  onSubmit={handleSubmit}
+  className="inline-flex items-center shadow-lg bg-white shadow-gray-500/20 rounded-lg overflow-hidden"
+>
+  <span className="bg-white py-4 pl-4">linkto/</span>
+  <input
+    type="text"
+    className="outline-none flex-1"
+    style={{ backgroundColor: 'white', marginBottom: 0, paddingLeft: 0 }}
+    placeholder="username"
+  />
+  <button
+    type="submit"
+    className="bg-blue-500 text-white py-4 px-6 whitespace-nowrap hover:bg-blue-600 transition-colors"
+  >
+    Join for Free
+  </button>
+</form>
+
+    <div className="mt-8 text-gray-600 max-w-lg mx-auto">
+  <p className="text-center">
+    Create a single, beautiful link to showcase your work, content, and social profiles.
+  </p>
+  <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-center mt-6">
+    <div className="flex flex-col items-center">
+      <span className="text-2xl">🎨</span>
+      <p className="font-semibold mt-1">Customize fully</p>
+    </div>
+    <div className="flex flex-col items-center">
+      <span className="text-2xl">🔗</span>
+      <p className="font-semibold mt-1">Add unlimited links</p>
+    </div>
+    <div className="flex flex-col items-center col-span-2 sm:col-span-1">
+      <span className="text-2xl">📈</span>
+      <p className="font-semibold mt-1">Track analytics</p>
+    </div>
+  </div>
+</div>
+    </div>
   );
 }

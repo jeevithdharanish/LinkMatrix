@@ -30,10 +30,11 @@ label.input-label{
     opacity: .2;
 }
 
-
+/* Mobile Navigation */
 input#navCb:checked ~ aside{
-    left:0;
+    transform: translateX(0);
 }
 input#navCb:checked ~ .backdrop{
-    display: block;
+    opacity: 1;
+    visibility: visible;
 }
