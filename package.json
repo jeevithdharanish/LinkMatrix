@@ -28,7 +28,7 @@
     "leaflet.heat": "^0.2.0",
     "mongodb": "^6.9.0",
     "mongoose": "^8.5.2",
-    "next": "^15.4.6",
+    "next": "14",
     "next-auth": "^4.24.7",
     "plain-object-clone": "^2.0.0",
     "react": "^19.1.1",
