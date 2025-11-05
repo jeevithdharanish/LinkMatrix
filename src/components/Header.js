@@ -49,16 +49,14 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {useSession} from "next-auth/react";
 import Link from "next/link";
 
-export default async function Header() {
+export default function Header() {
    const {data: session, status} = useSession();
-  
-   const userName = session?.user?.name || session?.user?.email;
 
   return (
     <header className="bg-white border-b shadow-lg py-4 ">
       <div className="max-w-4xl flex justify-between mx-auto px-6">
         <div className="flex items-center gap-6">
-          <Link href={''} className="flex items-center gap-2 text-blue-500">
+          <Link href="/" className="flex items-center gap-2 text-blue-500">
             <FontAwesomeIcon icon={faLink} className="text-blue-500 text-xl" />
             <span className="font-bold">LinkMatrix</span>
           </Link>
@@ -66,19 +64,18 @@ export default async function Header() {
         <nav className="flex items-center gap-4 text-sm text-slate-500">
           {!!session && (
             <>
-          <Link
-            href="/account"
-            className="cursor-pointer hover:scale-110 transition-transform duration-200">
-              Hello, {session?.user?.name || session?.user?.email || 'Guest'}
-         </Link>
-
+              <Link
+                href="/account"
+                className="cursor-pointer hover:scale-110 transition-transform duration-200">
+                Hello, {session?.user?.name || session?.user?.email || 'Guest'}
+              </Link>
               <LogoutButton />
             </>
           )}
           {!session && (
             <>
               <Link href="/main/login" className="hover:text-blue-500 transition-colors hover:scale-110 transition-transform duration-200">
-                 Sign In
+                Sign In
               </Link>
             </>
           )}
