@@ -35,7 +35,7 @@ export default function AppSidebar() {
                 <span>Logout</span>
             </button>
             <Link 
-        href={'/'} 
+        href={'/main'} 
         className="flex items-center gap-4 text-sm text-gray-500 p-3 rounded-lg hover:bg-gray-100 transition-colors mt-4"
       >
         <FontAwesomeIcon icon={faArrowLeft} className={'w-4 h-4'} />

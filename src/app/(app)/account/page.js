@@ -1,5 +1,6 @@
 import {authOptions} from "@/app/api/auth/[...nextauth]/route";
 import PageButtonsForm from "@/components/forms/PageButtonsForm";
+import PageWorkExperienceForm from "@/components/forms/PageWorkExperienceForm";
 import PageLinksForm from "@/components/forms/PageLinksForm";
 import PageSettingsForm from "@/components/forms/PageSettingsForm";
 import {Page} from "@/models/page";
@@ -11,6 +12,10 @@ import mongoose from "mongoose";
 import {getServerSession} from "next-auth";
 import {redirect} from "next/navigation";
 import Link from "next/link";
+import PageSummaryForm from "@/components/forms/PageSummaryForm";
+import PageSkillsForm from "@/components/forms/PageSkillsForm";
+import PageEducationForm from "@/components/forms/PageEducationForm";
+import { Education } from "@/models/Education";
 
 export default async function AccountPage({searchParams}) {
   const session = await getServerSession(authOptions);
@@ -23,6 +28,8 @@ export default async function AccountPage({searchParams}) {
 
   mongoose.connect(process.env.MONGO_URI);
   const page = await Page.findOne({owner: session?.user?.email});
+
+  
 
   // If user wants to claim a specific username, redirect to claim-username page
   if (desiredUsername) {
@@ -37,6 +44,14 @@ export default async function AccountPage({searchParams}) {
   if (page) {
     // Convert to plain object and serialize properly
     const leanPage = JSON.parse(JSON.stringify(page.toJSON()));
+    const education = await Education.find({
+    owner: session?.user?.email,
+    pageUri: page.uri,
+  });
+
+  // Convert Mongoose docs to plain objects for the client component
+  const serializedPage = JSON.parse(JSON.stringify(page));
+  const serializedEducation = JSON.parse(JSON.stringify(education || []));
     
     // Fetch analytics data
     const [clicks, groupedViews] = await Promise.all([
@@ -99,85 +114,19 @@ export default async function AccountPage({searchParams}) {
     </div>
 </div>
 
-        {/* Quick Analytics Overview */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <FontAwesomeIcon icon={faChartLine} className="text-blue-500" />
-              Quick Analytics
-            </h2>
-            <Link
-              href="/analytics"
-              className="text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
-            >
-              View Full Analytics
-              <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xs" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-700">Total Views</p>
-                  <p className="text-2xl font-bold text-green-900">{totalViews}</p>
-                  <p className="text-xs text-green-600 mt-1">
-                    <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
-                    {todayViews} today
-                  </p>
-                </div>
-                <FontAwesomeIcon icon={faEye} className="text-xl text-green-600" />
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-700">Total Clicks</p>
-                  <p className="text-2xl font-bold text-blue-900">{totalClicks}</p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
-                    {todayClicks} today
-                  </p>
-                </div>
-                <FontAwesomeIcon icon={faLink} className="text-xl text-blue-600" />
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-orange-700">Click Rate</p>
-                  <p className="text-2xl font-bold text-orange-900">{clickRate}%</p>
-                  <p className="text-xs text-orange-600 mt-1">
-                    <FontAwesomeIcon icon={faArrowUp} className="mr-1" />
-                    Engagement
-                  </p>
-                </div>
-                <FontAwesomeIcon icon={faPercent} className="text-xl text-orange-600" />
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-700">Active Links</p>
-                  <p className="text-2xl font-bold text-purple-900">{leanPage.links.length}</p>
-                  <p className="text-xs text-purple-600 mt-1">
-                    <FontAwesomeIcon icon={faLink} className="mr-1" />
-                    Live now
-                  </p>
-                </div>
-                <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xl text-purple-600" />
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         <div className="space-y-8 w-full">
           <PageSettingsForm page={leanPage} user={session.user} />
           <PageButtonsForm page={leanPage} user={session.user} />
           <PageLinksForm page={leanPage} user={session.user} />
+          <PageSummaryForm page={leanPage} user={session.user}/>
+          <PageWorkExperienceForm page={leanPage} user={session.user} />
+          <PageSkillsForm page={leanPage} user={session.user} />
+          <PageEducationForm 
+    page={serializedPage} 
+    initialEducation={serializedEducation} 
+  />
         </div>
       </div>
     );
