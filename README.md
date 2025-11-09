@@ -1,6 +1,7 @@
 LinkMatrix: Your Professional Analytics Hub
 
-LinkMatrix is a full-stack, open-source portfolio platform that rivals paid services like Linktree Pro and bold.pro. It transforms a simple "link-in-bio" into a complete professional hub, complete with a built-in, advanced analytics dashboard to track user engagement.
+LinkMatrix is a full-stack, open-source portfolio platform. It transforms a simple "link-in-bio" into a complete professional hub, complete with a built-in, advanced analytics dashboard to track user engagement.
+
 
 ✨ Core Features
 
