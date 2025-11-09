@@ -4,57 +4,55 @@ import SectionBox from "../layout/SectionBox";
 import SubmitButton from "../buttons/SubmitButton";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave } from "@fortawesome/free-solid-svg-icons";
+import { savePageSummary } from "@/actions/pageActions"; // Import the Server Action
+import { toast } from "react-hot-toast"; // Import toast
 
-export default function PageSummaryForm({ page,user }) {
+export default function PageSummaryForm({ page, user }) {
   const [summary, setSummary] = useState(page?.summary || "");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false); // Changed from 'loading'
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
+    setIsSaving(true);
 
     try {
-      const res = await fetch("/api/page/update-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uri: page.uri, summary }),
-      });
+      // Call the Server Action
+      const result = await savePageSummary(page.uri, summary);
 
-      if (res.ok) {
-        setMessage("✅ Summary updated successfully!");
+      if (result.success) {
+        toast.success("Summary saved!");
       } else {
-        setMessage("❌ Failed to update summary.");
+        toast.error(`Error: ${result.message || 'Could not save.'}`);
       }
     } catch (error) {
-      setMessage("⚠️ Error saving summary.");
-    } finally {
-      setLoading(false);
+      toast.error("An unexpected error occurred.");
+      console.error("Error in handleSubmit:", error);
     }
+
+    setIsSaving(false);
   }
 
   return (
     <SectionBox>
-   
       <h2 className="text-2xl font-bold mb-4 text-center">Professional Summary</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <textarea
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           placeholder="Write a short summary about yourself..."
-          className="w-full min-h-[120px] p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+          // Added styling to match your other forms (light theme)
+          className="w-full min-h-[120px] p-3 border border-gray-300 bg-gray-50 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
         />
         <div className="border-t pt-4 mt-4">
-              <SubmitButton className="max-w-xs mx-auto bg-blue-500 hover:bg-blue-600 transition duration-200">
-                <FontAwesomeIcon icon={faSave} />
-                <span>Save</span>
-              </SubmitButton>
-            </div>
+          <SubmitButton 
+            disabled={isSaving}
+            className="max-w-xs mx-auto bg-blue-500 hover:bg-blue-600 transition duration-200">
+            <FontAwesomeIcon icon={faSave} />
+            {/* Show saving state */}
+            <span>{isSaving ? 'Saving...' : 'Save'}</span>
+          </SubmitButton>
+        </div>
       </form>
-      {message && <p className="text-sm text-gray-600">{message}</p>}
-    
-    
     </SectionBox>
   );
 }

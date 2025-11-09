@@ -17,14 +17,6 @@
 
 import { model, models, Schema } from "mongoose";
 
-const EducationSchema = new Schema({
-  school: { type: String, default: "" },
-  degree: { type: String, default: "" },
-  start: { type: String, default: "" },
-  end: { type: String, default: "" },
-  description: { type: String, default: "" },
-}, { _id: false });
-
 const PageSchema = new Schema({
   uri: { type: String, required: true, min: 1, unique: true },
   owner: { type: String, required: true },
@@ -36,12 +28,9 @@ const PageSchema = new Schema({
   bgImage: { type: String, default: "" },
   buttons: { type: Object, default: {} },
   links: { type: Object, default: [] },
-
-  // 🆕 Added Education section
-  education: {
-    type: [EducationSchema],
-    default: [],
-  },
+  skills: { type: [String], default: [] },
+  summary:{ type: String, default: "" }
+ 
 
 }, { timestamps: true });
 

@@ -3,12 +3,45 @@ import Chart from "@/components/Chart";
 import { Event } from "@/models/Event";
 import { Page } from "@/models/page";
 import { DeletedLink } from "@/models/DeletedLink";
-import { faEye, faLink, faPercent, faCalendarDay, faArrowUp, faExternalLinkAlt } from "@fortawesome/free-solid-svg-icons";
+import { 
+  faEye, faLink, faPercent, faCalendarDay, faArrowUp, faExternalLinkAlt,
+  faEnvelope, faMobile, faFileAlt, faCode 
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  faDiscord, faFacebook, faGithub, faInstagram, faTelegram,
+  faTiktok, faWhatsapp, faYoutube, faLinkedin
+} from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { isToday, format } from "date-fns";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+
+// --- ADDED: Helper map & function from your public page ---
+// We need these to process and display social buttons
+export const buttonsIcons = {
+  email: faEnvelope,
+  mobile: faMobile,
+  instagram: faInstagram,
+  facebook: faFacebook,
+  linkedin: faLinkedin,
+  youtube: faYoutube,
+  github: faGithub,
+  geeksforgeeks: faCode,
+  resume: faFileAlt,
+  discord: faDiscord,
+  tiktok: faTiktok,
+  whatsapp: faWhatsapp,
+  telegram: faTelegram,
+};
+
+function buttonLink(key, value) {
+  if (key === 'mobile') return 'tel:' + value;
+  if (key === 'email') return 'mailto:' + value;
+  return value;
+}
+// --- END OF ADDED HELPERS ---
+
 
 export default async function AnalyticsPage() {
   await mongoose.connect(process.env.MONGO_URI);
@@ -24,46 +57,37 @@ export default async function AnalyticsPage() {
   }
 
   // Optimize queries with Promise.all for parallel execution
-  const [clicks, deletedLinks, groupedViews] = await Promise.all([
-    Event.find({ page: page.uri, type: 'click' }).lean(),
+  const [allClicks, deletedLinks, groupedViews] = await Promise.all([
+    Event.find({ page: page.uri, type: 'click' }).lean(), // 1. Get ALL clicks
     DeletedLink.find({ pageUri: page.uri, owner: session.user.email }).lean(),
     Event.aggregate([
-      {
-        $match: {
-          type: 'view',
-          uri: page.uri,
-        }
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: {
-              date: "$createdAt",
-              format: "%Y-%m-%d"
-            },
-          },
-          count: { $sum: 1 }
-        },
-      },
+      { $match: { type: 'view', uri: page.uri } },
+      { $group: { _id: { $dateToString: { date: "$createdAt", format: "%Y-%m-%d" } }, count: { $sum: 1 } } },
       { $sort: { _id: 1 } }
     ])
   ]);
 
-  // Calculate metrics
+  // 2. Filter clicks into two separate groups
+  const linkClicks = allClicks.filter(c => c.clickType === 'link' || !c.clickType); // Includes old clicks
+  const socialClicks = allClicks.filter(c => c.clickType === 'social');
+
+  // 3. Update metrics to use the new filtered groups
   const totalViews = groupedViews.reduce((acc, curr) => acc + curr.count, 0);
-  const totalClicks = clicks.length;
-  const clickRate = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : 0;
+  const totalLinkClicks = linkClicks.length; // Renamed from totalClicks
+  const totalSocialClicks = socialClicks.length; // New metric
+  const clickRate = totalViews > 0 ? ((totalLinkClicks / totalViews) * 100).toFixed(1) : 0; // Based on link clicks
   
   // Today's metrics
   const today = new Date();
   const todayViews = groupedViews.find(v => v._id === format(today, 'yyyy-MM-dd'))?.count || 0;
-  const todayClicks = clicks.filter(c => isToday(new Date(c.createdAt))).length;
+  const todayLinkClicks = linkClicks.filter(c => isToday(new Date(c.createdAt))).length; // Renamed
+  const todaySocialClicks = socialClicks.filter(c => isToday(new Date(c.createdAt))).length; // New metric
 
-  // Optimize link processing
+  // 4. Process LINK clicks
   const linkClickMap = new Map();
   const todayClickMap = new Map();
   
-  clicks.forEach(click => {
+  linkClicks.forEach(click => { // Use linkClicks here
     const url = click.uri;
     linkClickMap.set(url, (linkClickMap.get(url) || 0) + 1);
     
@@ -72,7 +96,6 @@ export default async function AnalyticsPage() {
     }
   });
 
-  // Process active links
   const activeLinks = page.links.map(link => ({
     title: link.title || 'Untitled Link',
     url: link.url,
@@ -81,14 +104,13 @@ export default async function AnalyticsPage() {
     isDeleted: false
   }));
 
-  // Process deleted links
   const deletedLinksData = deletedLinks.map(link => ({
     title: link.title || 'Deleted Link',
     url: link.url,
-    totalClicks: clicks.filter(c => 
+    totalClicks: linkClicks.filter(c => // Use linkClicks here
       c.uri === link.url && new Date(c.createdAt) <= new Date(link.deletedAt)
     ).length,
-    todayClicks: 0, // Deleted links don't get today's clicks
+    todayClicks: 0,
     isDeleted: true
   }));
 
@@ -97,7 +119,20 @@ export default async function AnalyticsPage() {
     .sort((a, b) => b.totalClicks - a.totalClicks)
     .slice(0, 5);
 
-  // Prepare chart data with better formatting
+  // 5. Process SOCIAL clicks
+  const socialClickMap = new Map();
+  const todaySocialClickMap = new Map();
+
+  socialClicks.forEach(click => {
+    const url = click.uri; // This is the full URL (e.g., mailto:..., https://...)
+    socialClickMap.set(url, (socialClickMap.get(url) || 0) + 1);
+    
+    if (isToday(new Date(click.createdAt))) {
+      todaySocialClickMap.set(url, (todaySocialClickMap.get(url) || 0) + 1);
+    }
+  });
+
+  // Prepare chart data
   const chartData = groupedViews.map(item => ({
     date: item._id,
     views: item.count,
@@ -112,8 +147,10 @@ export default async function AnalyticsPage() {
         <p className="text-gray-600">Track your page performance and link engagement</p>
       </div>
 
-      {/* Summary Cards */}
+      {/* 6. Updated Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        
+        {/* Total Views Card (Unchanged) */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
@@ -130,14 +167,15 @@ export default async function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Total Link Clicks Card (UPDATED) */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Clicks</p>
-              <p className="text-2xl font-bold text-gray-900">{totalClicks.toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-600">Total Link Clicks</p>
+              <p className="text-2xl font-bold text-gray-900">{totalLinkClicks.toLocaleString()}</p>
               <p className="text-xs text-blue-600 mt-1">
                 <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
-                {todayClicks} today
+                {todayLinkClicks} today
               </p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -146,10 +184,11 @@ export default async function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Click Rate Card (UPDATED) */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Click Rate</p>
+              <p className="text-sm font-medium text-gray-600">Link Click Rate</p>
               <p className="text-2xl font-bold text-gray-900">{clickRate}%</p>
               <p className="text-xs text-orange-600 mt-1">
                 <FontAwesomeIcon icon={faArrowUp} className="mr-1" />
@@ -162,14 +201,15 @@ export default async function AnalyticsPage() {
           </div>
         </div>
 
+        {/* Social Clicks Card (NEW) */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Links</p>
-              <p className="text-2xl font-bold text-gray-900">{page.links.length}</p>
+              <p className="text-sm font-medium text-gray-600">Social Clicks</p>
+              <p className="text-2xl font-bold text-gray-900">{totalSocialClicks.toLocaleString()}</p>
               <p className="text-xs text-purple-600 mt-1">
-                <FontAwesomeIcon icon={faLink} className="mr-1" />
-                Live now
+                <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
+                {todaySocialClicks} today
               </p>
             </div>
             <div className="p-3 bg-purple-100 rounded-lg">
@@ -201,7 +241,8 @@ export default async function AnalyticsPage() {
         {topLinks.length > 0 ? (
           <div className="space-y-4">
             {topLinks.map((link, index) => {
-              const progress = totalClicks > 0 ? (link.totalClicks / totalClicks) * 100 : 0;
+              // This progress bar is now correctly based on *only* link clicks
+              const progress = totalLinkClicks > 0 ? (link.totalClicks / totalLinkClicks) * 100 : 0; 
               return (
                 <div key={`${link.url}-${index}`} className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                   <div className="flex items-center min-w-0 flex-1">
@@ -240,7 +281,69 @@ export default async function AnalyticsPage() {
         )}
       </div>
 
-      {/* Detailed Link Analytics */}
+      {/* 7. NEW Socials Performance Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Socials Performance</h2>
+        {Object.keys(page.buttons || {}).length > 0 ? (
+          <div className="space-y-4">
+            {Object.entries(page.buttons).map(([key, value]) => {
+              if (!value) return null; // Don't show if button has no URL
+              const realUrl = buttonLink(key, value);
+              const totalClicks = socialClickMap.get(realUrl) || 0;
+              const todayClicks = todaySocialClickMap.get(realUrl) || 0;
+              const Icon = buttonsIcons[key];
+
+              return (
+                <div key={key} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    {/* Icon and Title */}
+                    <div className="flex-1 min-w-0 flex items-center gap-3">
+                      {Icon && (
+                        <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <FontAwesomeIcon icon={Icon} className="w-5 h-5 text-gray-600" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-medium text-gray-900 capitalize">
+                          {key}
+                        </h3>
+                        <a
+                          href={realUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-500 hover:text-blue-700 truncate block"
+                        >
+                          {value}
+                          <FontAwesomeIcon icon={faExternalLinkAlt} className="ml-1 text-xs" />
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Click Counts */}
+                    <div className="flex gap-4">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg min-w-[80px]">
+                        <div className="text-xl font-bold text-blue-600">{todayClicks}</div>
+                        <div className="text-xs text-blue-600 font-medium">Today</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg min-w-[80px]">
+                        <div className="text-xl font-bold text-gray-900">{totalClicks}</div>
+                        <div className="text-xs text-gray-600 font-medium">Total</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <FontAwesomeIcon icon={faExternalLinkAlt} className="text-4xl mb-4 text-gray-300" />
+            <p>No social buttons added yet</p>
+          </div>
+        )}
+      </div>
+
+      {/* Detailed Link Analytics (This now only shows 'link' clicks) */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">All Links Performance</h2>
         {page.links.length > 0 ? (

@@ -7,11 +7,17 @@ import {User} from "@/models/User";
 import mongoose from "mongoose";
 import {getServerSession} from "next-auth";
 import { Education } from "@/models/Education";
+import { WorkExperience } from "@/models/WorkExperience";
 
 export async function savePageSettings(formData) {
   mongoose.connect(process.env.MONGO_URI);
   const session = await getServerSession(authOptions);
-  if (session) {
+  if (!session) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  // ### FIX 1: Added try...catch and {success: ...} response ###
+  try {
     const dataKeys = [
       'displayName','location',
       'bio', 'bgType', 'bgColor', 'bgImage',
@@ -37,16 +43,22 @@ export async function savePageSettings(formData) {
       );
     }
 
-    return true;
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    return { success: false, message: error.message };
   }
-
-  return false;
 }
 
 export async function savePageButtons(formData) {
   mongoose.connect(process.env.MONGO_URI);
   const session = await getServerSession(authOptions);
-  if (session) {
+  if (!session) {
+    return { success: false, message: 'Unauthorized' };
+  }
+
+  // ### FIX 1: Added try...catch and {success: ...} response ###
+  try {
     const buttonsValues = {};
     formData.forEach((value, key) => {
       buttonsValues[key] = value;
@@ -56,25 +68,30 @@ export async function savePageButtons(formData) {
       {owner:session?.user?.email},
       dataToUpdate,
     );
-    return true;
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving buttons:', error);
+    return { success: false, message: error.message };
   }
-  return false;
 }
 
 export async function savePageLinks(links) {
   mongoose.connect(process.env.MONGO_URI);
   const session = await getServerSession(authOptions);
-  if (session) {
+  if (!session) {
+    return { success: false, message: 'Unauthorized' };
+  }
+  
+  try {
     const page = await Page.findOne({owner: session?.user?.email});
     const currentLinks = page.links || [];
     
-    // Find deleted links (links that were in currentLinks but not in new links)
+    // Find deleted links
     const newLinkUrls = links.map(link => link.url);
     const deletedLinks = currentLinks.filter(link => !newLinkUrls.includes(link.url));
     
-    // Store deleted links in DeletedLink collection
+    // Store deleted links
     for (const deletedLink of deletedLinks) {
-      // Count total clicks for this link up to now
       const totalClicks = await Event.countDocuments({
         uri: deletedLink.url,
         type: 'click',
@@ -94,12 +111,11 @@ export async function savePageLinks(links) {
       });
     }
     
-    // Check if any new links were previously deleted and remove them from DeletedLink collection
+    // Check for restored links
     const currentLinkUrls = currentLinks.map(link => link.url);
     const restoredLinks = links.filter(link => !currentLinkUrls.includes(link.url));
     
     for (const restoredLink of restoredLinks) {
-      // Remove from DeletedLink collection if it was previously deleted
       await DeletedLink.deleteMany({
         url: restoredLink.url,
         pageUri: page.uri,
@@ -113,9 +129,10 @@ export async function savePageLinks(links) {
       {links},
     );
     
-    return true;
-  } else {
-    return false;
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving links:', error);
+    return { success: false, message: error.message };
   }
 }
 
@@ -129,27 +146,28 @@ export async function savePageEducation(uri, educationData) {
   
   const userEmail = session.user.email;
 
-  // 1. Validate incoming data (basic)
   if (!uri || !Array.isArray(educationData)) {
     throw new Error('Invalid data provided.');
   }
 
   try {
-    // 2. Delete all existing education entries for this user and page
     await Education.deleteMany({
       owner: userEmail,
       pageUri: uri,
     });
 
-    // 3. Create new education entries
-    // Add owner and pageUri to each education item before inserting
+    // ### FIX 2: Be explicit about which fields to save ###
+    // This prevents saving temporary client-side props like 'id'
     const educationDocsToInsert = educationData.map(eduItem => ({
-      ...eduItem, // spread the school, degree, start, end, description
+      school: eduItem.school,
+      degree: eduItem.degree,
+      start: eduItem.start,
+      end: eduItem.end,
+      description: eduItem.description,
       owner: userEmail,
       pageUri: uri,
     }));
 
-    // 4. Insert all new entries into the database
     if (educationDocsToInsert.length > 0) {
       await Education.insertMany(educationDocsToInsert);
     }
@@ -158,6 +176,109 @@ export async function savePageEducation(uri, educationData) {
 
   } catch (error) {
     console.error('Error saving education:', error);
+    return { success: false, message: error.message };
+  }
+}
+
+// This function is correct
+export async function savePageSkills(uri, skillsData) {
+  await mongoose.connect(process.env.MONGO_URI);
+  
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  if (!uri || !Array.isArray(skillsData) || !skillsData.every(s => typeof s === 'string')) {
+    throw new Error('Invalid skills data. Must be an array of strings.');
+  }
+
+  try {
+    const result = await Page.updateOne(
+      { owner: session.user.email, uri: uri },
+      { $set: { skills: skillsData } }
+    );
+
+    if (result.matchedCount === 0) {
+      return { success: false, message: 'Page not found or permission denied.' };
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    console.error('Error saving skills:', error);
+    return { success: false, message: error.message };
+  }
+}
+
+// This function is correct
+export async function savePageWorkExperience(uri, workData) {
+  await mongoose.connect(process.env.MONGO_URI);
+  
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+  const userEmail = session.user.email;
+
+  if (!uri || !Array.isArray(workData)) {
+    throw new Error('Invalid data provided.');
+  }
+
+  try {
+    await WorkExperience.deleteMany({
+      owner: userEmail,
+      pageUri: uri,
+    });
+
+    const workDocsToInsert = workData.map(item => ({
+      company: item.company,
+      role: item.role,
+      start: item.start,
+      end: item.end,
+      bullets: item.bullets || [],
+      owner: userEmail,
+      pageUri: uri,
+    }));
+
+    if (workDocsToInsert.length > 0) {
+      await WorkExperience.insertMany(workDocsToInsert);
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    console.error('Error saving work experience:', error);
+    return { success: false, message: error.message };
+  }
+}
+
+// This function is correct
+export async function savePageSummary(uri, summary) {
+  await mongoose.connect(process.env.MONGO_URI);
+  
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  if (!uri || typeof summary !== 'string') {
+    throw new Error('Invalid data');
+  }
+
+  try {
+    const result = await Page.updateOne(
+      { owner: session.user.email, uri: uri },
+      { $set: { summary: summary } }
+    );
+
+    if (result.matchedCount === 0) {
+      return { success: false, message: 'Page not found' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving summary:', error);
     return { success: false, message: error.message };
   }
 }

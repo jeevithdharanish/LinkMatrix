@@ -89,13 +89,36 @@
 
 //   return Response.json(true);
 // }
-import {Event} from '@/models/Event';
+import { Event } from "@/models/Event";
 import mongoose from "mongoose";
+import { NextResponse } from "next/server";
+
 export async function POST(req) {
-  mongoose.connect(process.env.MONGO_URI);
-  const url = new URL(req.url);
-  const clickedLink = atob(url.searchParams.get('url'));
-  const page = url.searchParams.get('page');
-  await Event.create({type:'click', uri: clickedLink, page});
-  return Response.json(true);
+  await mongoose.connect(process.env.MONGO_URI);
+
+  const { searchParams } = new URL(req.url);
+  const url = searchParams.get('url');
+  const page = searchParams.get('page');
+  
+  // --- READ THE NEW PARAM ---
+  // Default to 'link' if not specified
+  const clickType = searchParams.get('clickType') || 'link'; 
+
+  if (!url || !page) {
+    return NextResponse.json({ error: 'Missing params' }, { status: 400 });
+  }
+
+  try {
+    // --- SAVE THE NEW FIELD ---
+    await Event.create({
+      type: 'click',
+      page: page,
+      uri: atob(url),     // Decode the URL
+      clickType: clickType, // Save the click type
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: 'Server Error' }, { status: 500 });
+  }
 }
