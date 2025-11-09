@@ -13,8 +13,7 @@ import PageSummaryForm from "@/components/forms/PageSummaryForm";
 import PageSkillsForm from "@/components/forms/PageSkillsForm";
 import PageEducationForm from "@/components/forms/PageEducationForm";
 import { Education } from "@/models/Education";
-import {Page} from "@/models/page";
-
+import { Page } from "@/models/page";
 
 export default async function AccountPage({ searchParams }) {
   const session = await getServerSession(authOptions);
@@ -24,7 +23,9 @@ export default async function AccountPage({ searchParams }) {
     return redirect('/');
   }
 
+  // connect to DB (idempotent if you guard connection elsewhere)
   await mongoose.connect(process.env.MONGO_URI);
+
   const page = await Page.findOne({ owner: session?.user?.email });
 
   if (desiredUsername) {
@@ -35,17 +36,19 @@ export default async function AccountPage({ searchParams }) {
     return redirect('/claim-username');
   }
 
-  // We have a page, so we can convert it to a plain object
+  // Page -> plain object for passing to client components
   const leanPage = JSON.parse(JSON.stringify(page));
 
-  // --- THE FIX IS HERE ---
-  // Both queries must have .lean()
-  const [ workExperience, clicks, groupedViews] = await Promise.all([
-    
-    WorkExperience.find({ 
+  // fetch related collections (use .lean() where possible)
+  const [education, workExperience, clicks, groupedViews] = await Promise.all([
+    Education.find({
       owner: session?.user?.email,
       pageUri: leanPage.uri,
-    }).lean(), // <-- This one is correct
+    }).lean(), // returns plain objects (but still stringify for safety)
+    WorkExperience.find({
+      owner: session?.user?.email,
+      pageUri: leanPage.uri,
+    }).lean(),
     Event.find({ page: leanPage.uri, type: 'click' }).lean(),
     Event.aggregate([
       {
@@ -69,18 +72,26 @@ export default async function AccountPage({ searchParams }) {
     ])
   ]);
 
-  // ... (all your analytics calculations remain the same) ...
-  const totalViews = groupedViews.reduce((acc, curr) => acc + curr.count, 0);
-  const totalClicks = clicks.length;
+  // Convert to plain JSON-safe objects (this removes ObjectId buffers, Date objects, etc.)
+  const educationPlain = JSON.parse(JSON.stringify(education || []));
+  const workExperiencePlain = JSON.parse(JSON.stringify(workExperience || []));
+  const clicksPlain = JSON.parse(JSON.stringify(clicks || []));
+  const groupedViewsPlain = JSON.parse(JSON.stringify(groupedViews || []));
+
+  // Analytics calculations (use the plain versions)
+  const totalViews = groupedViewsPlain.reduce((acc, curr) => acc + (curr.count || 0), 0);
+  const totalClicks = clicksPlain.length;
   const clickRate = totalViews > 0 ? Number(((totalClicks / totalViews) * 100).toFixed(1)) : 0;
   const today = new Date();
   const todayString = format(today, 'yyyy-MM-dd');
-  const todayViews = groupedViews.find(v => v._id === todayString)?.count || 0;
-  const todayClicks = clicks.filter(c => {
+  const todayViews = groupedViewsPlain.find(v => v._id === todayString)?.count || 0;
+  const todayClicks = clicksPlain.filter(c => {
     const clickDate = new Date(c.createdAt);
     return format(clickDate, 'yyyy-MM-dd') === todayString;
   }).length;
 
+  // If you need to use the analytics values in JSX, you can pass them as props or compute in client components.
+  // For now we just compute them here to keep parity with your original code.
 
   return (
     <div className="space-y-8 w-full">
@@ -93,6 +104,7 @@ export default async function AccountPage({ searchParams }) {
           <a
             href={`/${leanPage.uri}`}
             target="_blank"
+            rel="noreferrer"
             className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-lg text-white font-mono text-base hover:bg-white/30 transition-all duration-200 break-all"
           >
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,15 +120,16 @@ export default async function AccountPage({ searchParams }) {
         <PageButtonsForm page={leanPage} user={session.user} />
         <PageLinksForm page={leanPage} user={session.user} />
         <PageSummaryForm page={leanPage} user={session.user} />
-        
-        {/* These props will now be plain objects, and the warning will stop */}
-        <PageWorkExperienceForm 
-          page={leanPage} 
-          user={session.user} 
-          initialWorkExperience={workExperience} 
+
+        {/* These props are now plain objects, so the warning will disappear */}
+        <PageWorkExperienceForm
+          page={leanPage}
+          user={session.user}
+          initialWorkExperience={workExperiencePlain}
         />
-        
-        <PageEducationForm page={leanPage} initialEducation={leanPage.education || []} />
+
+        <PageEducationForm page={leanPage} initialEducation={educationPlain} />
+
         <PageSkillsForm page={leanPage} initialSkills={leanPage.skills || []} />
       </div>
     </div>
