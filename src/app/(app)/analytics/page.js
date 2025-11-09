@@ -51,7 +51,8 @@ export default async function AnalyticsPage() {
     return redirect('/');
   }
 
-  const page = await Page.findOne({ owner: session.user.email });
+  // Use .lean() here to get a plain object
+  const page = await Page.findOne({ owner: session.user.email }).lean(); 
   if (!page) {
     return redirect('/claim-username');
   }
@@ -132,11 +133,10 @@ export default async function AnalyticsPage() {
     }
   });
 
-  // Prepare chart data
+  // Prepare chart data (This matches your Chart.js component)
   const chartData = groupedViews.map(item => ({
-    date: item._id,
-    views: item.count,
-    formattedDate: format(new Date(item._id), 'MMM dd')
+    date: item._id, // Your chart uses 'date' for XAxis
+    views: item.count, // Your chart finds 'views' as the data key
   }));
 
   return (
@@ -225,14 +225,8 @@ export default async function AnalyticsPage() {
           <h2 className="text-xl font-semibold text-gray-900">Views Over Time</h2>
           <div className="text-sm text-gray-500">Last 30 days</div>
         </div>
-        {chartData.length > 0 ? (
-          <Chart data={chartData} />
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            <FontAwesomeIcon icon={faEye} className="text-4xl mb-4 text-gray-300" />
-            <p>No view data available yet</p>
-          </div>
-        )}
+        {/* This will now use your Chart.js file */}
+        <Chart data={chartData} />
       </div>
 
       {/* Top Performing Links */}

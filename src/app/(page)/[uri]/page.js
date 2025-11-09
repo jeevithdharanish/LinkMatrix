@@ -1,7 +1,8 @@
 import { Page } from "@/models/page";
 import { User } from "@/models/User";
 import { WorkExperience } from "@/models/WorkExperience";
-import { Education } from "@/models/Education";
+import { Education }from "@/models/Education";
+import { Event } from "@/models/Event"; // 1. Import the Event model
 import mongoose from "mongoose";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,8 +47,7 @@ export default async function UserPage({ params }) {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     
-    // 1. Fetch Page and User (using .lean() for plain objects)
-    const pageData = await Page.findOne({ uri }).lean(); // Renamed to pageData
+    const pageData = await Page.findOne({ uri }).lean();
 
     if (!pageData) {
       return (
@@ -60,18 +60,19 @@ export default async function UserPage({ params }) {
       );
     }
 
-    // 2. Fetch all other data in parallel
     const [userData, workExperience, education] = await Promise.all([
-      User.findOne({ email: pageData.owner }).lean(), // Use pageData.owner
+      User.findOne({ email: pageData.owner }).lean(),
       WorkExperience.find({ owner: pageData.owner, pageUri: uri }).lean(),
       Education.find({ owner: pageData.owner, pageUri: uri }).lean(),
     ]);
-    
-    // --- This is where the bug was. No need to re-parse what is already lean ---
-    // const pageData = JSON.parse(JSON.stringify(pageDoc)); // REMOVED
-    // const userData = JSON.parse(JSON.stringify(userDoc)); // REMOVED
 
-    // Sort buttons for consistency
+    // 2. --- THIS IS THE FIX ---
+    // We add the view tracking back in.
+    // We do this *after* finding the page, so we don't track views for 404s.
+    // No 'await' is needed, we let it run in the background.
+    Event.create({ uri: uri, page: uri, type: 'view' }).catch(console.error);
+
+    
     const sortedButtons = Object.keys(pageData.buttons || {})
       .sort()
       .reduce((obj, key) => {
@@ -138,7 +139,6 @@ export default async function UserPage({ params }) {
                   {Object.keys(pageData.buttons).map((buttonKey) => {
                     const url = buttonLink(buttonKey, pageData.buttons[buttonKey]);
                     
-                    // --- THIS IS THE CHANGE ---
                     const pingUrl = `${baseUrl}api/click?url=${btoa(url)}&page=${pageData.uri}&clickType=social`;
                     
                     return (
@@ -147,7 +147,7 @@ export default async function UserPage({ params }) {
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        ping={pingUrl} // <-- Updated ping URL
+                        ping={pingUrl}
                         className="w-12 h-12 rounded-full bg-white text-gray-700 shadow-md flex items-center justify-center hover:bg-gray-200 hover:scale-110 transition-all duration-300"
                         aria-label={buttonKey}
                       >
@@ -183,7 +183,6 @@ export default async function UserPage({ params }) {
                                 key={`${link.url}-${index}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                // --- THIS IS THE CHANGE ---
                                 ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}&clickType=link`}
                                 className="group block bg-white rounded-2xl p-4 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
                                 href={link.url}
