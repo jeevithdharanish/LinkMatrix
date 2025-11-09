@@ -1,23 +1,23 @@
 import { Page } from "@/models/page";
 import { User } from "@/models/User";
-import { Event } from "@/models/Event";
-import {
-  faDiscord,
-  faFacebook,
-  faGithub,
-  faInstagram,
-  faTelegram,
-  faTiktok,
-  faWhatsapp,
-  faYoutube,
-  faLinkedin
-} from "@fortawesome/free-brands-svg-icons";
-import { faEnvelope, faLink, faLocationDot, faMobile, faFileAlt, faCode } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { WorkExperience } from "@/models/WorkExperience";
+import { Education } from "@/models/Education";
 import mongoose from "mongoose";
-import { btoa } from "next/dist/compiled/@edge-runtime/primitives";
 import Image from "next/image";
 import Link from "next/link";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faDiscord, faFacebook, faGithub, faInstagram, faTelegram,
+  faTiktok, faWhatsapp, faYoutube, faLinkedin
+} from "@fortawesome/free-brands-svg-icons";
+import { faEnvelope, faLink, faLocationDot, faMobile, faFileAlt, faCode } from "@fortawesome/free-solid-svg-icons";
+import { btoa } from "next/dist/compiled/@edge-runtime/primitives";
+
+// Import your new components
+import SummarySection from "@/components/profile/SummarySection";
+import SkillsSection from "@/components/profile/SkillsSection";
+import WorkExperienceSection from "@/components/profile/WorkExperienceSection";
+import EducationSection from "@/components/profile/EducationSection";
 
 export const buttonsIcons = {
   email: faEnvelope,
@@ -36,174 +36,201 @@ export const buttonsIcons = {
 };
 
 function buttonLink(key, value) {
-  if (key === 'mobile') {
-    return 'tel:' + value;
-  }
-  if (key === 'email') {
-    return 'mailto:' + value;
-  }
+  if (key === 'mobile') return 'tel:' + value;
+  if (key === 'email') return 'mailto:' + value;
   return value;
 }
 
 export default async function UserPage({ params }) {
   const uri = params.uri;
-  
+  const baseUrl = process.env.URL || "";
+
   try {
-    mongoose.connect(process.env.MONGO_URI);
-    const page = await Page.findOne({ uri });
+    await mongoose.connect(process.env.MONGO_URI);
     
-    if (!page) {
+    // 1. Fetch Page and User
+    const pageDoc = await Page.findOne({ uri });
+
+    if (!pageDoc) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-800">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Page Not Found</h1>
-            <p className="text-gray-300">This link does not exist.</p>
+            <p className="text-gray-600">This link does not exist.</p>
           </div>
         </div>
       );
     }
 
-    const user = await User.findOne({ email: page.owner });
+    const userDoc = await User.findOne({ email: pageDoc.owner });
 
-    // Create view event asynchronously without blocking render
-    Event.create({ uri: uri, page: uri, type: 'view' }).catch(console.error);
+    // 2. Fetch Work and Education
+    const [workExperience, education] = await Promise.all([
+      WorkExperience.find({ owner: userDoc.email, pageUri: uri }).lean(),
+      Education.find({ owner: userDoc.email, pageUri: uri }).lean(),
+    ]);
 
-    // Convert to plain objects to avoid hydration issues
-    const pageData = JSON.parse(JSON.stringify(page.toJSON()));
-    const userData = JSON.parse(JSON.stringify(user.toJSON()));
+    // 3. Convert all data to plain objects
+    const pageData = JSON.parse(JSON.stringify(pageDoc));
+    const userData = JSON.parse(JSON.stringify(userDoc));
 
-    const backgroundStyle = pageData.bgType === 'color'
-      ? { backgroundColor: pageData.bgColor }
-      : { backgroundImage: `url(${pageData.bgImage})` };
+    // Sort buttons for consistency
+    const sortedButtons = Object.keys(pageData.buttons || {})
+      .sort()
+      .reduce((obj, key) => {
+        obj[key] = pageData.buttons[key];
+        return obj;
+      }, {});
+    pageData.buttons = sortedButtons;
+
+    const backgroundStyle =
+      pageData.bgType === "color"
+        ? { backgroundColor: pageData.bgColor }
+        : { backgroundImage: `url(${pageData.bgImage})` };
 
     return (
-      <div className="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 text-white min-h-screen">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden">
+      <div className="bg-gray-100 text-gray-900 min-h-screen">
+        
+        {/* === HERO SECTION (Full-width, adjusted height) === */}
+        <div className="relative overflow-hidden mb-[-5rem] md:mb-[-6rem]"> {/* Negative margin to pull content up */}
           <div
-            className="h-64 bg-gray-400 bg-cover bg-center relative"
+            className="h-48 md:h-64 bg-gray-400 bg-cover bg-center relative" // Reduced height
             style={backgroundStyle}
           >
-            <div className="absolute inset-0 bg-black/20"></div>
-          </div>
-          
-          {/* Profile Image */}
-          <div className="relative -mt-20 flex justify-center">
-            <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
-              <Image
-                className="w-full h-full object-cover"
-                src={userData.image}
-                alt={`${pageData.displayName}'s avatar`}
-                width={128}
-                height={128}
-                priority
-              />
-            </div>
+            <div className="absolute inset-0 bg-black/10"></div>
           </div>
         </div>
 
-        {/* Profile Info */}
-        <div className="px-6 pt-6 pb-8 text-center">
-          <h1 className="text-3xl font-bold mb-3 text-white">
-            {pageData.displayName}
-          </h1>
-
-          {pageData.location && (
-            <div className="flex items-center justify-center gap-2 text-white/80 mb-4">
-              <FontAwesomeIcon icon={faLocationDot} className="w-4 h-4" />
-              <span className="text-lg">{pageData.location}</span>
-            </div>
-          )}
-
-          {pageData.bio && (
-            <div className="max-w-md mx-auto mb-6">
-              <p className="text-white/90 leading-relaxed">{pageData.bio}</p>
-            </div>
-          )}
-
-          {/* Social Buttons */}
-          {Object.keys(pageData.buttons || {}).length > 0 && (
-            <div className="flex flex-wrap gap-3 justify-center mb-8">
-              {Object.keys(pageData.buttons).map(buttonKey => (
-                <Link
-                  key={buttonKey}
-                  href={buttonLink(buttonKey, pageData.buttons[buttonKey])}
-                  className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white flex items-center justify-center hover:bg-white/20 hover:scale-110 transition-all duration-300 shadow-lg"
-                  aria-label={buttonKey}
-                >
-                  <FontAwesomeIcon
-                    className="w-5 h-5"
-                    icon={buttonsIcons[buttonKey]}
+        {/* === THIS IS THE ALIGNMENT FIX === */}
+        {/* This single wrapper centers ALL content (Profile Info + Grid) */}
+        <div className="relative max-w-6xl mx-auto px-4 pb-8 lg:px-8">
+            
+            {/* === Profile Info (Overlapping & Centered) === */}
+            {/* This card will now be centered because it's inside the max-w-6xl wrapper */}
+            <div className="text-center bg-white rounded-xl shadow-lg p-6 pt-0 md:pt-6 -mt-20 md:-mt-24 mb-8">
+              
+              {/* Profile Image */}
+              <div className="relative -mt-20 md:-mt-24 flex justify-center mb-4">
+                <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
+                  <Image
+                    className="w-full h-full object-cover"
+                    src={userData.image}
+                    alt={`${pageData.displayName}'s avatar`}
+                    width={128}
+                    height={128}
+                    priority
                   />
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Links Section */}
-        <div className="px-6 pb-12">
-          <div className="max-w-lg mx-auto space-y-4">
-            {(pageData.links || []).map((link, index) => (
-              <Link
-                key={`${link.url}-${index}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                ping={`${process.env.URL}api/click?url=${btoa(link.url)}&page=${pageData.uri}`}
-                className="group block bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-4 hover:bg-white/20 hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-xl"
-                href={link.url}
-              >
-                <div className="flex items-center gap-4">
-                  {/* Icon */}
-                  <div className="flex-shrink-0 w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center overflow-hidden">
-                    {link.icon ? (
-                      <Image
-                        className="w-full h-full object-cover rounded-xl"
-                        src={link.icon}
-                        alt={`${link.title} icon`}
-                        width={56}
-                        height={56}
-                      />
-                    ) : (
-                      <FontAwesomeIcon 
-                        icon={faLink} 
-                        className="w-6 h-6 text-white/80" 
-                      />
-                    )}
-                  </div>
-                  
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-white text-lg mb-1 truncate group-hover:text-white/90">
-                      {link.title}
-                    </h3>
-                    {link.subtitle && (
-                      <p className="text-white/70 text-sm truncate">
-                        {link.subtitle}
-                      </p>
-                    )}
-                  </div>
-                  
-                  {/* Arrow indicator */}
-                  <div className="flex-shrink-0 text-white/60 group-hover:text-white/80 group-hover:translate-x-1 transition-all duration-300">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
                 </div>
-              </Link>
-            ))}
-          </div>
-        </div>
+              </div>
+
+              <h1 className="text-3xl font-bold mb-2 text-gray-900">
+                {pageData.displayName}
+              </h1>
+              {pageData.location && (
+                <div className="flex items-center justify-center gap-2 text-gray-600 mb-3">
+                  <FontAwesomeIcon icon={faLocationDot} className="w-4 h-4" />
+                  <span className="text-lg">{pageData.location}</span>
+                </div>
+              )}
+              {pageData.bio && (
+                <div className="max-w-xl mx-auto mb-6">
+                  <p className="text-gray-700 leading-relaxed">{pageData.bio}</p>
+                </div>
+              )}
+              {Object.keys(pageData.buttons || {}).length > 0 && (
+                <div className="flex flex-wrap gap-3 justify-center mb-8">
+                  {Object.keys(pageData.buttons).map((buttonKey) => (
+                    <Link
+                      key={buttonKey}
+                      href={buttonLink(buttonKey, pageData.buttons[buttonKey])}
+                      className="w-12 h-12 rounded-full bg-white text-gray-700 shadow-md flex items-center justify-center hover:bg-gray-200 hover:scale-110 transition-all duration-300"
+                      aria-label={buttonKey}
+                    >
+                      <FontAwesomeIcon
+                        className="w-5 h-5"
+                        icon={buttonsIcons[buttonKey]}
+                      />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* === TWO-COLUMN LAYOUT WRAPPER === */}
+            {/* This grid is also inside the max-w-6xl wrapper, so it aligns perfectly */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                {/* === MAIN CONTENT (LEFT COLUMN) === */}
+                <div className="md:col-span-2 space-y-8">
+                    {/* These sections no longer need their own max-width */}
+                    <SummarySection summary={pageData.summary} />
+                    <WorkExperienceSection workExperience={workExperience} />
+                    <EducationSection education={education} />
+                </div>
+
+                {/* === SIDEBAR (RIGHT COLUMN) === */}
+                <div className="md:col-span-1 space-y-8">
+                    {/* Links Section */}
+                    <div className="w-full">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-6">Links</h2>
+                        <div className="space-y-4">
+                            {(pageData.links || []).map((link, index) => (
+                            <Link
+                                key={`${link.url}-${index}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}`}
+                                className="group block bg-white rounded-2xl p-4 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
+                                href={link.url}
+                            >
+                                <div className="flex items-center gap-4">
+                                <div className="flex-shrink-0 w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+                                    {link.icon ? (
+                                    <Image
+                                        className="w-full h-full object-cover rounded-xl"
+                                        src={link.icon}
+                                        alt={`${link.title} icon`}
+                                        width={56}
+                                        height={56}
+                                    />
+                                    ) : (
+                                    <FontAwesomeIcon
+                                        icon={faLink}
+                                        className="w-6 h-6 text-gray-500"
+                                    />
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-semibold text-gray-800 text-lg mb-1 truncate">
+                                    {link.title}
+                                    </h3>
+                                    {link.subtitle && (
+                                    <p className="text-gray-500 text-sm truncate">
+                                        {link.subtitle}
+                                    </p>
+                                    )}
+                                </div>
+                                </div>
+                            </Link>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Skills Section */}
+                    <SkillsSection skills={pageData.skills} />
+                </div>
+                
+            </div> {/* End of two-column grid */}
+        </div> {/* === END OF THE ALIGNMENT WRAPPER === */}
       </div>
     );
   } catch (error) {
-    console.error('Error loading page:', error);
+    console.error("Error loading page:", error);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-900 to-red-800 text-white">
+      <div className="min-h-screen flex items-center justify-center bg-red-100 text-red-800">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">Something went wrong</h1>
-          <p className="text-red-200">Please try again later.</p>
+          <p className="text-red-600">Please try again later.</p>
         </div>
       </div>
     );
