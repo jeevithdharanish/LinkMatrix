@@ -39,17 +39,13 @@ export default async function AccountPage({ searchParams }) {
   const leanPage = JSON.parse(JSON.stringify(page));
 
   // --- THE FIX IS HERE ---
-  // You must add .lean() to any query whose data
-  // is passed from a Server Component to a Client Component.
-  const [education, workExperience, clicks, groupedViews] = await Promise.all([
-    Education.find({
-      owner: session?.user?.email,
-      pageUri: leanPage.uri,
-    }).lean(), // <-- .lean() makes this a plain object
+  // Both queries must have .lean()
+  const [ workExperience, clicks, groupedViews] = await Promise.all([
+    
     WorkExperience.find({ 
       owner: session?.user?.email,
       pageUri: leanPage.uri,
-    }).lean(), // <-- .lean() makes this a plain object
+    }).lean(), // <-- This one is correct
     Event.find({ page: leanPage.uri, type: 'click' }).lean(),
     Event.aggregate([
       {
@@ -113,15 +109,14 @@ export default async function AccountPage({ searchParams }) {
         <PageLinksForm page={leanPage} user={session.user} />
         <PageSummaryForm page={leanPage} user={session.user} />
         
-        {/* These props are now plain objects, so the warning will disappear */}
+        {/* These props will now be plain objects, and the warning will stop */}
         <PageWorkExperienceForm 
           page={leanPage} 
           user={session.user} 
           initialWorkExperience={workExperience} 
         />
         
-        <PageEducationForm page={leanPage} initialEducation={education} />
-        
+        <PageEducationForm page={leanPage} initialEducation={leanPage.education || []} />
         <PageSkillsForm page={leanPage} initialSkills={leanPage.skills || []} />
       </div>
     </div>

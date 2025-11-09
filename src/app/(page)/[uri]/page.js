@@ -12,8 +12,6 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import { faEnvelope, faLink, faLocationDot, faMobile, faFileAlt, faCode } from "@fortawesome/free-solid-svg-icons";
 import { btoa } from "next/dist/compiled/@edge-runtime/primitives";
-
-// Import your new components
 import SummarySection from "@/components/profile/SummarySection";
 import SkillsSection from "@/components/profile/SkillsSection";
 import WorkExperienceSection from "@/components/profile/WorkExperienceSection";
@@ -48,10 +46,10 @@ export default async function UserPage({ params }) {
   try {
     await mongoose.connect(process.env.MONGO_URI);
     
-    // 1. Fetch Page and User
-    const pageDoc = await Page.findOne({ uri });
+    // 1. Fetch Page and User (using .lean() for plain objects)
+    const pageData = await Page.findOne({ uri }).lean(); // Renamed to pageData
 
-    if (!pageDoc) {
+    if (!pageData) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-800">
           <div className="text-center">
@@ -62,17 +60,16 @@ export default async function UserPage({ params }) {
       );
     }
 
-    const userDoc = await User.findOne({ email: pageDoc.owner });
-
-    // 2. Fetch Work and Education
-    const [workExperience, education] = await Promise.all([
-      WorkExperience.find({ owner: userDoc.email, pageUri: uri }).lean(),
-      Education.find({ owner: userDoc.email, pageUri: uri }).lean(),
+    // 2. Fetch all other data in parallel
+    const [userData, workExperience, education] = await Promise.all([
+      User.findOne({ email: pageData.owner }).lean(), // Use pageData.owner
+      WorkExperience.find({ owner: pageData.owner, pageUri: uri }).lean(),
+      Education.find({ owner: pageData.owner, pageUri: uri }).lean(),
     ]);
-
-    // 3. Convert all data to plain objects
-    const pageData = JSON.parse(JSON.stringify(pageDoc));
-    const userData = JSON.parse(JSON.stringify(userDoc));
+    
+    // --- This is where the bug was. No need to re-parse what is already lean ---
+    // const pageData = JSON.parse(JSON.stringify(pageDoc)); // REMOVED
+    // const userData = JSON.parse(JSON.stringify(userDoc)); // REMOVED
 
     // Sort buttons for consistency
     const sortedButtons = Object.keys(pageData.buttons || {})
@@ -91,25 +88,22 @@ export default async function UserPage({ params }) {
     return (
       <div className="bg-gray-100 text-gray-900 min-h-screen">
         
-        {/* === HERO SECTION (Full-width, adjusted height) === */}
-        <div className="relative overflow-hidden mb-[-5rem] md:mb-[-6rem]"> {/* Negative margin to pull content up */}
+        {/* === HERO SECTION === */}
+        <div className="relative overflow-hidden mb-[-5rem] md:mb-[-6rem]">
           <div
-            className="h-48 md:h-64 bg-gray-400 bg-cover bg-center relative" // Reduced height
+            className="h-48 md:h-64 bg-gray-400 bg-cover bg-center relative"
             style={backgroundStyle}
           >
             <div className="absolute inset-0 bg-black/10"></div>
           </div>
         </div>
 
-        {/* === THIS IS THE ALIGNMENT FIX === */}
-        {/* This single wrapper centers ALL content (Profile Info + Grid) */}
+        {/* === CONTENT WRAPPER === */}
         <div className="relative max-w-6xl mx-auto px-4 pb-8 lg:px-8">
             
-            {/* === Profile Info (Overlapping & Centered) === */}
-            {/* This card will now be centered because it's inside the max-w-6xl wrapper */}
+            {/* === Profile Info Card === */}
             <div className="text-center bg-white rounded-xl shadow-lg p-6 pt-0 md:pt-6 -mt-20 md:-mt-24 mb-8">
               
-              {/* Profile Image */}
               <div className="relative -mt-20 md:-mt-24 flex justify-center mb-4">
                 <div className="w-32 h-32 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-white">
                   <Image
@@ -137,32 +131,42 @@ export default async function UserPage({ params }) {
                   <p className="text-gray-700 leading-relaxed">{pageData.bio}</p>
                 </div>
               )}
+
+              {/* === SOCIAL BUTTONS (UPDATED) === */}
               {Object.keys(pageData.buttons || {}).length > 0 && (
                 <div className="flex flex-wrap gap-3 justify-center mb-8">
-                  {Object.keys(pageData.buttons).map((buttonKey) => (
-                    <Link
-                      key={buttonKey}
-                      href={buttonLink(buttonKey, pageData.buttons[buttonKey])}
-                      className="w-12 h-12 rounded-full bg-white text-gray-700 shadow-md flex items-center justify-center hover:bg-gray-200 hover:scale-110 transition-all duration-300"
-                      aria-label={buttonKey}
-                    >
-                      <FontAwesomeIcon
-                        className="w-5 h-5"
-                        icon={buttonsIcons[buttonKey]}
-                      />
-                    </Link>
-                  ))}
+                  {Object.keys(pageData.buttons).map((buttonKey) => {
+                    const url = buttonLink(buttonKey, pageData.buttons[buttonKey]);
+                    
+                    // --- THIS IS THE CHANGE ---
+                    const pingUrl = `${baseUrl}api/click?url=${btoa(url)}&page=${pageData.uri}&clickType=social`;
+                    
+                    return (
+                      <Link
+                        key={buttonKey}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        ping={pingUrl} // <-- Updated ping URL
+                        className="w-12 h-12 rounded-full bg-white text-gray-700 shadow-md flex items-center justify-center hover:bg-gray-200 hover:scale-110 transition-all duration-300"
+                        aria-label={buttonKey}
+                      >
+                        <FontAwesomeIcon
+                          className="w-5 h-5"
+                          icon={buttonsIcons[buttonKey]}
+                        />
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>
             
             {/* === TWO-COLUMN LAYOUT WRAPPER === */}
-            {/* This grid is also inside the max-w-6xl wrapper, so it aligns perfectly */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
                 {/* === MAIN CONTENT (LEFT COLUMN) === */}
                 <div className="md:col-span-2 space-y-8">
-                    {/* These sections no longer need their own max-width */}
                     <SummarySection summary={pageData.summary} />
                     <WorkExperienceSection workExperience={workExperience} />
                     <EducationSection education={education} />
@@ -170,7 +174,7 @@ export default async function UserPage({ params }) {
 
                 {/* === SIDEBAR (RIGHT COLUMN) === */}
                 <div className="md:col-span-1 space-y-8">
-                    {/* Links Section */}
+                    {/* Links Section (UPDATED) */}
                     <div className="w-full">
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Links</h2>
                         <div className="space-y-4">
@@ -179,38 +183,39 @@ export default async function UserPage({ params }) {
                                 key={`${link.url}-${index}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}`}
+                                // --- THIS IS THE CHANGE ---
+                                ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}&clickType=link`}
                                 className="group block bg-white rounded-2xl p-4 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
                                 href={link.url}
                             >
-                                <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-4">
                                 <div className="flex-shrink-0 w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
-                                    {link.icon ? (
+                                  {link.icon ? (
                                     <Image
-                                        className="w-full h-full object-cover rounded-xl"
-                                        src={link.icon}
-                                        alt={`${link.title} icon`}
-                                        width={56}
-                                        height={56}
+                                      className="w-full h-full object-cover rounded-xl"
+                                      src={link.icon}
+                                      alt={`${link.title} icon`}
+                                      width={56}
+                                      height={56}
                                     />
-                                    ) : (
+                                  ) : (
                                     <FontAwesomeIcon
-                                        icon={faLink}
-                                        className="w-6 h-6 text-gray-500"
+                                      icon={faLink}
+                                      className="w-6 h-6 text-gray-500"
                                     />
-                                    )}
+                                  )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-gray-800 text-lg mb-1 truncate">
+                                  <h3 className="font-semibold text-gray-800 text-lg mb-1 truncate">
                                     {link.title}
-                                    </h3>
-                                    {link.subtitle && (
+                                  </h3>
+                                  {link.subtitle && (
                                     <p className="text-gray-500 text-sm truncate">
-                                        {link.subtitle}
+                                      {link.subtitle}
                                     </p>
-                                    )}
+                                  )}
                                 </div>
-                                </div>
+                              </div>
                             </Link>
                             ))}
                         </div>
@@ -220,8 +225,8 @@ export default async function UserPage({ params }) {
                     <SkillsSection skills={pageData.skills} />
                 </div>
                 
-            </div> {/* End of two-column grid */}
-        </div> {/* === END OF THE ALIGNMENT WRAPPER === */}
+            </div>
+        </div>
       </div>
     );
   } catch (error) {
