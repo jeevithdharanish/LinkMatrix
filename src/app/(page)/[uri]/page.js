@@ -1,8 +1,9 @@
 import { Page } from "@/models/page";
 import { User } from "@/models/User";
 import { WorkExperience } from "@/models/WorkExperience";
-import { Education }from "@/models/Education";
-import { Event } from "@/models/Event"; // 1. Import the Event model
+import { Education } from "@/models/Education";
+import { Project } from "@/models/Project";
+import { Event } from "@/models/Event";
 import mongoose from "mongoose";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,6 +18,7 @@ import SummarySection from "@/components/profile/SummarySection";
 import SkillsSection from "@/components/profile/SkillsSection";
 import WorkExperienceSection from "@/components/profile/WorkExperienceSection";
 import EducationSection from "@/components/profile/EducationSection";
+import ProjectSection from "@/components/profile/ProjectSection";
 
 export const buttonsIcons = {
   email: faEnvelope,
@@ -60,18 +62,15 @@ export default async function UserPage({ params }) {
       );
     }
 
-    const [userData, workExperience, education] = await Promise.all([
+    const [userData, workExperience, education, projects] = await Promise.all([
       User.findOne({ email: pageData.owner }).lean(),
       WorkExperience.find({ owner: pageData.owner, pageUri: uri }).lean(),
       Education.find({ owner: pageData.owner, pageUri: uri }).lean(),
+      Project.find({ owner: pageData.owner, pageUri: uri }).lean(),
     ]);
-
-    // 2. --- THIS IS THE FIX ---
-    // We add the view tracking back in.
-    // We do this *after* finding the page, so we don't track views for 404s.
-    // No 'await' is needed, we let it run in the background.
+    
+    // Track page view
     Event.create({ uri: uri, page: uri, type: 'view' }).catch(console.error);
-
     
     const sortedButtons = Object.keys(pageData.buttons || {})
       .sort()
@@ -133,12 +132,12 @@ export default async function UserPage({ params }) {
                 </div>
               )}
 
-              {/* === SOCIAL BUTTONS (UPDATED) === */}
+              {/* === SOCIAL BUTTONS === */}
               {Object.keys(pageData.buttons || {}).length > 0 && (
                 <div className="flex flex-wrap gap-3 justify-center mb-8">
                   {Object.keys(pageData.buttons).map((buttonKey) => {
                     const url = buttonLink(buttonKey, pageData.buttons[buttonKey]);
-                    
+                    // Ping includes clickType=social
                     const pingUrl = `${baseUrl}api/click?url=${btoa(url)}&page=${pageData.uri}&clickType=social`;
                     
                     return (
@@ -162,19 +161,27 @@ export default async function UserPage({ params }) {
               )}
             </div>
             
-            {/* === TWO-COLUMN LAYOUT WRAPPER === */}
+            {/* === TWO-COLUMN LAYOUT === */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 
-                {/* === MAIN CONTENT (LEFT COLUMN) === */}
+                {/* === MAIN CONTENT (LEFT) === */}
                 <div className="md:col-span-2 space-y-8">
                     <SummarySection summary={pageData.summary} />
+                    
+                    {/* Pass baseUrl and pageUri to Projects so they can track clicks */}
+                    <ProjectSection 
+                      projects={projects} 
+                      baseUrl={baseUrl} 
+                      pageUri={pageData.uri} 
+                    />
+                    
                     <WorkExperienceSection workExperience={workExperience} />
                     <EducationSection education={education} />
                 </div>
 
-                {/* === SIDEBAR (RIGHT COLUMN) === */}
+                {/* === SIDEBAR (RIGHT) === */}
                 <div className="md:col-span-1 space-y-8">
-                    {/* Links Section (UPDATED) */}
+                    {/* Links Section */}
                     <div className="w-full">
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">Links</h2>
                         <div className="space-y-4">
@@ -183,6 +190,7 @@ export default async function UserPage({ params }) {
                                 key={`${link.url}-${index}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                // Ping includes clickType=link
                                 ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}&clickType=link`}
                                 className="group block bg-white rounded-2xl p-4 shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
                                 href={link.url}

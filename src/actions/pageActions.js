@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import {getServerSession} from "next-auth";
 import { Education } from "@/models/Education";
 import { WorkExperience } from "@/models/WorkExperience";
+import { Project } from "@/models/Project";
 
 export async function savePageSettings(formData) {
   mongoose.connect(process.env.MONGO_URI);
@@ -279,6 +280,51 @@ export async function savePageSummary(uri, summary) {
     return { success: true };
   } catch (error) {
     console.error('Error saving summary:', error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function savePageProject(uri, projectData) {
+  await mongoose.connect(process.env.MONGO_URI);
+  
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+  const userEmail = session.user.email;
+
+  if (!uri || !Array.isArray(projectData)) {
+    throw new Error('Invalid data provided.');
+  }
+
+  try {
+    // 1. Delete all existing projects for this user and page
+    await Project.deleteMany({
+      owner: userEmail,
+      pageUri: uri,
+    });
+
+    // 2. Prepare new entries
+    const projectDocsToInsert = projectData.map(item => ({
+      title: item.title,
+      techStacks: item.techStacks,
+      timeTaken: item.timeTaken,
+      summary: item.summary,
+      githubLink: item.githubLink, // <-- ADD THIS
+      liveLink: item.liveLink,     // <-- ADD THIS
+      owner: userEmail,
+      pageUri: uri,
+    }));
+
+    // 3. Insert all new entries
+    if (projectDocsToInsert.length > 0) {
+      await Project.insertMany(projectDocsToInsert);
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    console.error('Error saving projects:', error);
     return { success: false, message: error.message };
   }
 }
