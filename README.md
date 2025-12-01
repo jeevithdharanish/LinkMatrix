@@ -96,7 +96,7 @@
    Create a `.env` file in the root directory:
    ```env
    # MongoDB
-   MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/linkmatrix
+   MONGO_URI="---your mongo uri---"
    
    # NextAuth
    NEXTAUTH_SECRET=your-super-secret-key-here
