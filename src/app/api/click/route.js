@@ -90,11 +90,11 @@
 //   return Response.json(true);
 // }
 import { Event } from "@/models/Event";
-import mongoose from "mongoose";
+import { connectToDatabase } from "@/libs/mongoClient";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
-  await mongoose.connect(process.env.MONGO_URI);
+  await connectToDatabase();
 
   const { searchParams } = new URL(req.url);
   const url = searchParams.get('url');

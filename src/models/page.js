@@ -53,9 +53,5 @@ const PageSchema = new Schema({
 
 }, { timestamps: true });
 
-// Delete the cached model if it exists (helps with hot reloading issues)
-if (models.Page) {
-  delete models.Page;
-}
-
-export const Page = model("Page", PageSchema);
+// Use existing model or create new one (prevents OverwriteModelError)
+export const Page = models?.Page || model("Page", PageSchema);

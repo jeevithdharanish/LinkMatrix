@@ -83,7 +83,7 @@ export default function PageLinksForm({ page, user }) {
                     icon={faGripLines} />
                 </div>
                 <div className="text-center">
-                  <div className="bg-gray-300 inline-block relative aspect-square overflow-hidden w-16 h-16 inline-flex justify-center items-center rounded-full border-2 border-gray-400">
+                  <div className="bg-gray-300 relative aspect-square overflow-hidden w-16 h-16 flex justify-center items-center rounded-full border-2 border-gray-400">
                     {l.icon && (
                       <Image
                         className="w-full h-full object-cover"

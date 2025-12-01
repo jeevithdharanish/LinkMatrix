@@ -4,14 +4,44 @@ import {Page} from "@/models/page";
 import {DeletedLink} from "@/models/DeletedLink";
 import {Event} from "@/models/Event";
 import {User} from "@/models/User";
-import mongoose from "mongoose";
+import { connectToDatabase } from "@/libs/mongoClient";
 import {getServerSession} from "next-auth";
 import { Education } from "@/models/Education";
 import { WorkExperience } from "@/models/WorkExperience";
 import { Project } from "@/models/Project";
 
+// Helper function to sanitize string input
+function sanitizeString(str, maxLength = 1000) {
+  if (typeof str !== 'string') return '';
+  return str
+    .trim()
+    .slice(0, maxLength)
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, ''); // Remove event handlers
+}
+
+// Helper function to sanitize URL
+function sanitizeUrl(url) {
+  if (typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  // Only allow http, https, mailto, tel protocols
+  if (trimmed.startsWith('http://') || 
+      trimmed.startsWith('https://') || 
+      trimmed.startsWith('mailto:') || 
+      trimmed.startsWith('tel:') ||
+      trimmed.startsWith('/')) {
+    return trimmed.slice(0, 2000);
+  }
+  // If no protocol, assume https
+  if (trimmed && !trimmed.includes(':')) {
+    return 'https://' + trimmed.slice(0, 2000);
+  }
+  return '';
+}
+
 export async function savePageSettings(formData) {
-  mongoose.connect(process.env.MONGO_URI);
+  await connectToDatabase();
   const session = await getServerSession(authOptions);
   if (!session) {
     return { success: false, message: 'Unauthorized' };
@@ -27,7 +57,15 @@ export async function savePageSettings(formData) {
     const dataToUpdate = {};
     for (const key of dataKeys) {
       if (formData.has(key)) {
-        dataToUpdate[key] = formData.get(key);
+        const value = formData.get(key);
+        // Sanitize text inputs
+        if (['displayName', 'location', 'bio'].includes(key)) {
+          dataToUpdate[key] = sanitizeString(value, key === 'bio' ? 2000 : 200);
+        } else if (['bgImage'].includes(key)) {
+          dataToUpdate[key] = sanitizeUrl(value);
+        } else {
+          dataToUpdate[key] = value;
+        }
       }
     }
 
@@ -52,7 +90,7 @@ export async function savePageSettings(formData) {
 }
 
 export async function savePageButtons(formData) {
-  mongoose.connect(process.env.MONGO_URI);
+  await connectToDatabase();
   const session = await getServerSession(authOptions);
   if (!session) {
     return { success: false, message: 'Unauthorized' };
@@ -77,7 +115,7 @@ export async function savePageButtons(formData) {
 }
 
 export async function savePageLinks(links) {
-  mongoose.connect(process.env.MONGO_URI);
+  await connectToDatabase();
   const session = await getServerSession(authOptions);
   if (!session) {
     return { success: false, message: 'Unauthorized' };
@@ -138,7 +176,7 @@ export async function savePageLinks(links) {
 }
 
 export async function savePageEducation(uri, educationData) {
-  await mongoose.connect(process.env.MONGO_URI);
+  await connectToDatabase();
   
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -160,12 +198,12 @@ export async function savePageEducation(uri, educationData) {
     // ### FIX 2: Be explicit about which fields to save ###
     // This prevents saving temporary client-side props like 'id'
     const educationDocsToInsert = educationData.map(eduItem => ({
-      school: eduItem.school,
-      degree: eduItem.degree,
-      start: eduItem.start,
-      end: eduItem.end,
-      cgpa: eduItem.cgpa || '',
-      description: eduItem.description,
+      school: sanitizeString(eduItem.school, 200),
+      degree: sanitizeString(eduItem.degree, 200),
+      start: sanitizeString(eduItem.start, 50),
+      end: sanitizeString(eduItem.end, 50),
+      cgpa: sanitizeString(eduItem.cgpa || '', 20),
+      description: sanitizeString(eduItem.description, 2000),
       owner: userEmail,
       pageUri: uri,
     }));
@@ -185,17 +223,14 @@ export async function savePageEducation(uri, educationData) {
 // Updated to support categorized skills with proficiency
 export async function savePageSkills(uri, skillsData) {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await connectToDatabase();
     
     const session = await getServerSession(authOptions);
     if (!session) {
       return { success: false, message: 'Unauthorized. Please log in.' };
     }
 
-    console.log("=== savePageSkills DEBUG ===");
-    console.log("URI:", uri);
-    console.log("Session email:", session.user.email);
-    console.log("Skills data received:", JSON.stringify(skillsData, null, 2));
+    // Validate inputs
 
     // Support both old format (array of strings) and new format (categorized object)
     if (!uri) {
@@ -213,15 +248,9 @@ export async function savePageSkills(uri, skillsData) {
       { $set: { skills: skillsData } }
     );
 
-    console.log("Update result:", JSON.stringify(result, null, 2));
-
     if (result.matchedCount === 0) {
       return { success: false, message: 'Page not found or permission denied.' };
     }
-
-    // Verify the save
-    const verifyPage = await Page.findOne({ owner: session.user.email });
-    console.log("Verified skills in DB:", JSON.stringify(verifyPage?.skills, null, 2));
 
     return { success: true };
 
@@ -233,7 +262,7 @@ export async function savePageSkills(uri, skillsData) {
 
 // This function is correct
 export async function savePageWorkExperience(uri, workData) {
-  await mongoose.connect(process.env.MONGO_URI);
+  await connectToDatabase();
   
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -252,11 +281,11 @@ export async function savePageWorkExperience(uri, workData) {
     });
 
     const workDocsToInsert = workData.map(item => ({
-      company: item.company,
-      role: item.role,
-      start: item.start,
-      end: item.end,
-      bullets: item.bullets || [],
+      company: sanitizeString(item.company, 200),
+      role: sanitizeString(item.role, 200),
+      start: sanitizeString(item.start, 50),
+      end: sanitizeString(item.end, 50),
+      bullets: (item.bullets || []).map(b => sanitizeString(b, 500)).slice(0, 20),
       owner: userEmail,
       pageUri: uri,
     }));
@@ -275,7 +304,7 @@ export async function savePageWorkExperience(uri, workData) {
 
 // This function is correct
 export async function savePageSummary(uri, summary) {
-  await mongoose.connect(process.env.MONGO_URI);
+  await connectToDatabase();
   
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -304,7 +333,7 @@ export async function savePageSummary(uri, summary) {
 }
 
 export async function savePageProject(uri, projectData) {
-  await mongoose.connect(process.env.MONGO_URI);
+  await connectToDatabase();
   
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -325,12 +354,12 @@ export async function savePageProject(uri, projectData) {
 
     // 2. Prepare new entries
     const projectDocsToInsert = projectData.map(item => ({
-      title: item.title,
-      techStacks: item.techStacks,
-      timeTaken: item.timeTaken,
-      summary: item.summary,
-      githubLink: item.githubLink, // <-- ADD THIS
-      liveLink: item.liveLink,     // <-- ADD THIS
+      title: sanitizeString(item.title, 200),
+      techStacks: sanitizeString(item.techStacks, 500),
+      timeTaken: sanitizeString(item.timeTaken, 100),
+      summary: sanitizeString(item.summary, 3000),
+      githubLink: sanitizeUrl(item.githubLink),
+      liveLink: sanitizeUrl(item.liveLink),
       owner: userEmail,
       pageUri: uri,
     }));

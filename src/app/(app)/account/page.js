@@ -6,7 +6,7 @@ import PageSettingsForm from "@/components/forms/PageSettingsForm";
 import { WorkExperience } from "@/models/WorkExperience";
 import { Event } from "@/models/Event";
 import { format } from "date-fns";
-import mongoose from "mongoose";
+import { connectToDatabase } from "@/libs/mongoClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import PageSummaryForm from "@/components/forms/PageSummaryForm";
@@ -26,8 +26,8 @@ export default async function AccountPage({ searchParams }) {
     return redirect('/');
   }
 
-  // connect to DB (idempotent if you guard connection elsewhere)
-  await mongoose.connect(process.env.MONGO_URI);
+  // Use optimized connection
+  await connectToDatabase();
 
   const page = await Page.findOne({ owner: session?.user?.email });
 

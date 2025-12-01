@@ -4,7 +4,61 @@ import { WorkExperience } from "@/models/WorkExperience";
 import { Education } from "@/models/Education";
 import { Project } from "@/models/Project";
 import { Event } from "@/models/Event";
-import mongoose from "mongoose";
+import { connectToDatabase } from "@/libs/mongoClient";
+import { unstable_cache } from "next/cache";
+
+// Cache page data for 60 seconds to reduce DB calls
+const getCachedPageData = unstable_cache(
+  async (uri) => {
+    await connectToDatabase();
+    return Page.findOne({ uri }).lean();
+  },
+  ['page-data'],
+  { revalidate: 60, tags: ['portfolio'] }
+);
+
+// Dynamic SEO metadata - uses cached page data
+export async function generateMetadata({ params }) {
+  try {
+    const page = await getCachedPageData(params.uri);
+    
+    if (!page) {
+      return {
+        title: 'Portfolio Not Found | LinkMatrix',
+        description: 'This portfolio page does not exist.',
+      };
+    }
+
+    const title = `${page.displayName || 'Portfolio'} | LinkMatrix`;
+    const description = page.bio || page.summary?.slice(0, 160) || `Check out ${page.displayName}'s professional portfolio`;
+    const imageUrl = page.profileImage || '/profile.jpg';
+
+    return {
+      title,
+      description,
+      keywords: ['portfolio', 'developer', page.displayName, 'resume', 'projects'].filter(Boolean),
+      authors: [{ name: page.displayName }],
+      openGraph: {
+        title,
+        description,
+        type: 'profile',
+        images: [{ url: imageUrl, width: 800, height: 800, alt: page.displayName }],
+        url: `/${page.uri}`,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [imageUrl],
+      },
+    };
+  } catch (error) {
+    return {
+      title: 'Portfolio | LinkMatrix',
+      description: 'Professional portfolio page',
+    };
+  }
+}
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -69,14 +123,16 @@ export default async function UserPage({ params }) {
   const baseUrl = process.env.URL || "";
 
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await connectToDatabase();
     
-    const pageData = await Page.findOne({ uri }).lean();
+    // Use cached page data (same cache as generateMetadata)
+    const pageData = await getCachedPageData(uri);
 
     if (!pageData) {
       return notFound();
     }
 
+    // Fetch related data in parallel
     const [userData, workExperience, education, projects] = await Promise.all([
       User.findOne({ email: pageData.owner }).lean(),
       WorkExperience.find({ owner: pageData.owner, pageUri: uri }).lean(),
@@ -89,8 +145,8 @@ export default async function UserPage({ params }) {
     const serializedProjects = JSON.parse(JSON.stringify(projects));
     const serializedWorkExperience = JSON.parse(JSON.stringify(workExperience));
     
-    // Track page view
-    await Event.create({ uri: uri, page: uri, type: 'view' }).catch(console.error);
+    // Track page view - non-blocking (don't await)
+    Event.create({ uri: uri, page: uri, type: 'view' }).catch(() => {});
     
     const sortedButtons = Object.keys(pageData.buttons || {})
       .sort()
@@ -269,49 +325,32 @@ export default async function UserPage({ params }) {
         <main className="relative">
           
           {/* About Section */}
-          <section id="about" className="py-24 bg-slate-900/50">
-            <div className="max-w-6xl mx-auto px-6 lg:px-8">
-              <SummarySection summary={pageData.summary} />
-            </div>
-          </section>
-
-          {/* Skills Section */}
-          <section id="skills" className="py-24 bg-slate-950">
-            <div className="max-w-6xl mx-auto px-6 lg:px-8">
-              <SkillsSection skills={pageData.skills} />
-            </div>
-          </section>
-
-          {/* Projects Section */}
-          <section id="projects" className="py-24 bg-slate-900/50">
-            <div className="max-w-6xl mx-auto px-6 lg:px-8">
-              <ProjectSection 
-                projects={serializedProjects} 
-                baseUrl={baseUrl} 
-                pageUri={pageData.uri} 
-              />
-            </div>
-          </section>
-
-          {/* Experience Section */}
-          <section id="experience" className="py-24 bg-slate-950">
-            <div className="max-w-6xl mx-auto px-6 lg:px-8">
-              <WorkExperienceSection workExperience={serializedWorkExperience} />
-            </div>
-          </section>
+          {pageData.summary && (
+            <section id="about" className="py-24 bg-slate-900/50">
+              <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                <SummarySection summary={pageData.summary} />
+              </div>
+            </section>
+          )}
 
           {/* Education Section */}
-          <section id="education" className="py-24 bg-slate-900/50">
-            <div className="max-w-6xl mx-auto px-6 lg:px-8">
-              <EducationSection education={serializedEducation} />
-            </div>
-          </section>
+          {serializedEducation?.length > 0 && (
+            <section id="education" className="py-24 bg-slate-950">
+              <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                <EducationSection education={serializedEducation} />
+              </div>
+            </section>
+          )}
 
-          {/* Links Section */}
+          {/* Featured Links Section - Moved up */}
           {(pageData.links || []).length > 0 && (
-            <section id="links" className="py-24 bg-slate-950">
+            <section id="links" className="py-24 bg-slate-900/50">
               <div className="max-w-4xl mx-auto px-6 lg:px-8">
                 <div className="text-center mb-12">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-cyan-400 text-sm font-medium mb-4">
+                    <FontAwesomeIcon icon={faLink} className="w-4 h-4" />
+                    Resources
+                  </span>
                   <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent mb-4">
                     Featured Links
                   </h2>
@@ -325,10 +364,10 @@ export default async function UserPage({ params }) {
                       target="_blank"
                       rel="noopener noreferrer"
                       ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}&clickType=link`}
-                      className="group flex items-center gap-4 p-5 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl hover:bg-slate-800 hover:border-blue-500/50 transition-all duration-300"
+                      className="group flex items-center gap-4 p-5 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl hover:bg-slate-800 hover:border-cyan-500/50 transition-all duration-300 hover:-translate-y-1"
                       href={link.url}
                     >
-                      <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center overflow-hidden group-hover:from-blue-500/30 group-hover:to-purple-500/30 transition-all duration-300">
+                      <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl flex items-center justify-center overflow-hidden group-hover:from-cyan-500/30 group-hover:to-blue-500/30 transition-all duration-300">
                         {link.icon ? (
                           <Image
                             className="w-full h-full object-cover rounded-xl"
@@ -340,12 +379,12 @@ export default async function UserPage({ params }) {
                         ) : (
                           <FontAwesomeIcon
                             icon={faLink}
-                            className="w-6 h-6 text-blue-400 group-hover:text-blue-300 transition-colors duration-300"
+                            className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300"
                           />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-white text-lg mb-1 truncate group-hover:text-blue-400 transition-colors duration-300">
+                        <h3 className="font-semibold text-white text-lg mb-1 truncate group-hover:text-cyan-400 transition-colors duration-300">
                           {link.title}
                         </h3>
                         {link.subtitle && (
@@ -356,11 +395,42 @@ export default async function UserPage({ params }) {
                       </div>
                       <FontAwesomeIcon 
                         icon={faArrowUpRightFromSquare} 
-                        className="w-5 h-5 text-slate-600 group-hover:text-blue-400 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" 
+                        className="w-5 h-5 text-slate-600 group-hover:text-cyan-400 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" 
                       />
                     </Link>
                   ))}
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* Skills Section */}
+          {pageData.skills && Object.keys(pageData.skills).length > 0 && (
+            <section id="skills" className="py-24 bg-slate-950">
+              <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                <SkillsSection skills={pageData.skills} />
+              </div>
+            </section>
+          )}
+
+          {/* Projects Section */}
+          {serializedProjects?.length > 0 && (
+            <section id="projects" className="py-24 bg-slate-900/50">
+              <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                <ProjectSection 
+                  projects={serializedProjects} 
+                  baseUrl={baseUrl} 
+                  pageUri={pageData.uri} 
+                />
+              </div>
+            </section>
+          )}
+
+          {/* Experience Section */}
+          {serializedWorkExperience?.length > 0 && (
+            <section id="experience" className="py-24 bg-slate-950">
+              <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                <WorkExperienceSection workExperience={serializedWorkExperience} />
               </div>
             </section>
           )}
