@@ -14,8 +14,9 @@ import PageSkillsForm from "@/components/forms/PageSkillsForm";
 import PageEducationForm from "@/components/forms/PageEducationForm";
 import { Education } from "@/models/Education";
 import { Page } from "@/models/page";
-import { Project } from "@/models/Project"; // 1. Import the new Project model
-import PageProjectForm from "@/components/forms/PageProjectForm"; // 2. Import the new Form
+import { Project } from "@/models/Project";
+import PageProjectForm from "@/components/forms/PageProjectForm";
+import AccountHeader from "@/components/layout/AccountHeader";
 
 export default async function AccountPage({ searchParams }) {
   const session = await getServerSession(authOptions);
@@ -101,28 +102,11 @@ export default async function AccountPage({ searchParams }) {
   // For now we just compute them here to keep parity with your original code.
 
   return (
-    <div className="space-y-8 w-full">
+    <div className="space-y-6 w-full max-w-4xl mx-auto">
       {/* Header Section with Page URL */}
-      <div
-        className="md:sticky md:top-0 md:z-50 bg-gradient-to-r from-blue-500 to-purple-600 mt-2 rounded-xl p-4 text-white shadow-lg w-full">
-        <h1 className="text-3xl font-bold mb-4">Your Link Page</h1>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <span className="text-blue-100 text-lg">Your page is live at:</span>
-          <a
-            href={`/${leanPage.uri}`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-lg text-white font-mono text-base hover:bg-white/30 transition-all duration-200 break-all"
-          >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-            linkto/{leanPage.uri}
-          </a>
-        </div>
-      </div>
+      <AccountHeader uri={leanPage.uri} />
 
-      <div className="space-y-8 w-full">
+      <div className="space-y-6 w-full">
         <PageSettingsForm page={leanPage} user={session.user} />
         <PageButtonsForm page={leanPage} user={session.user} />
         <PageLinksForm page={leanPage} user={session.user} />

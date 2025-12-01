@@ -15,15 +15,15 @@ export default function PageProjectForm({ page, initialProjects }) {
   const [isSaving, setIsSaving] = useState(false);
 
   function addNewProject() {
-    setItems(prev => [...prev, {
+    setItems(prev => [{
       _id: crypto.randomUUID(),
       title: "",
       techStacks: "",
       timeTaken: "",
       summary: "",
-      githubLink: "", // <-- ADD THIS
-      liveLink: "",   // <-- ADD THIS
-    }]);
+      githubLink: "",
+      liveLink: "",
+    }, ...prev]);
   }
 
   function updateItem(id, field, value) {
@@ -59,79 +59,93 @@ export default function PageProjectForm({ page, initialProjects }) {
       <form onSubmit={save}>
         <h2 className="text-2xl font-bold mb-4 text-center">Projects</h2>
         
+        {/* Add New Button - At Top */}
         <button
           onClick={addNewProject}
           type="button"
           className="text-blue-500 text-lg flex gap-2 items-center cursor-pointer mb-4 hover:text-blue-700 transition duration-200">
           <FontAwesomeIcon className="bg-blue-500 text-white p-1 rounded-full aspect-square" icon={faPlus} />
-          <span>Add new </span>
+          <span>Add new project</span>
         </button>
-
+        
         <div className="space-y-4">
           {items.length === 0 && (
-            <div className="text-sm text-gray-500">No projects added yet.</div>
+            <div className="text-sm text-gray-400">No projects added yet.</div>
           )}
 
           {items.map((item) => (
-            <div key={item._id} className="p-4 bg-gray-100 rounded-lg">
-              <div className="flex gap-3 items-start">
-                {/* Input Fields */}
-                <div className="flex-1">
+            <div key={item._id} className="p-4 bg-white/10 rounded-lg">
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Project Title</label>
+                <input
+                  value={item.title}
+                  onChange={(e) => updateItem(item._id, "title", e.target.value)}
+                  placeholder="e.g., E-Commerce Platform"
+                  className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Tech Stack</label>
                   <input
-                    value={item.title}
-                    onChange={(e) => updateItem(item._id, "title", e.target.value)}
-                    placeholder="Project Title"
-                    className="w-full mb-2 rounded shadow-sm px-3 py-2 border border-gray-300 bg-gray-50"
-                  />
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      value={item.techStacks}
-                      onChange={(e) => updateItem(item._id, "techStacks", e.target.value)}
-                      placeholder="Tech (e.g., React, Node.js)"
-                      className="rounded px-3 py-2 shadow-sm border border-gray-300 bg-gray-50 flex-1"
-                    />
-                    <input
-                      value={item.timeTaken}
-                      onChange={(e) => updateItem(item._id, "timeTaken", e.target.value)}
-                      placeholder="Time (e.g., 2 Months)"
-                      className="rounded px-3 py-2 shadow-sm border border-gray-300 bg-gray-50 w-40"
-                    />
-                  </div>
-
-                  {/* --- ADD THESE NEW INPUTS --- */}
-                  <div className="flex gap-2 mb-2">
-                    <input
-                      value={item.githubLink}
-                      onChange={(e) => updateItem(item._id, "githubLink", e.target.value)}
-                      placeholder="GitHub Link (optional)"
-                      className="rounded px-3 py-2 shadow-sm border border-gray-300 bg-gray-50 flex-1"
-                    />
-                    <input
-                      value={item.liveLink}
-                      onChange={(e) => updateItem(item._id, "liveLink", e.target.value)}
-                      placeholder="Live Demo Link (optional)"
-                      className="rounded px-3 py-2 shadow-sm border border-gray-300 bg-gray-50 flex-1"
-                    />
-                  </div>
-
-                  <textarea
-                    value={item.summary}
-                    onChange={(e) => updateItem(item._id, "summary", e.target.value)}
-                    placeholder="Short summary about the project..."
-                    className="w-full mt-1 rounded shadow-sm px-3 py-2 border border-gray-300 bg-gray-50"
+                    value={item.techStacks}
+                    onChange={(e) => updateItem(item._id, "techStacks", e.target.value)}
+                    placeholder="e.g., React, Node.js, MongoDB"
+                    className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
-
-                {/* Remove Button */}
-                <div className="flex flex-col gap-2 ml-2">
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item._id)}
-                    className="w-full bg-red-500 text-white py-2 px-3 h-full flex gap-2 items-center justify-center rounded shadow hover:bg-red-600 transition duration-200">
-                    <FontAwesomeIcon icon={faTrash} />
-                    Remove
-                  </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Duration</label>
+                  <input
+                    value={item.timeTaken}
+                    onChange={(e) => updateItem(item._id, "timeTaken", e.target.value)}
+                    placeholder="e.g., 2 Months"
+                    className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">GitHub Link <span className="text-gray-500 font-normal">(optional)</span></label>
+                  <input
+                    value={item.githubLink}
+                    onChange={(e) => updateItem(item._id, "githubLink", e.target.value)}
+                    placeholder="https://github.com/username/repo"
+                    className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Live Demo Link <span className="text-gray-500 font-normal">(optional)</span></label>
+                  <input
+                    value={item.liveLink}
+                    onChange={(e) => updateItem(item._id, "liveLink", e.target.value)}
+                    placeholder="https://your-project.vercel.app"
+                    className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Summary / Description</label>
+                <textarea
+                  value={item.summary}
+                  onChange={(e) => updateItem(item._id, "summary", e.target.value)}
+                  placeholder="Describe key features, your role, and achievements. Use new lines for bullet points."
+                  rows={4}
+                  className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              <div className="text-right mt-2">
+                <button
+                  type="button"
+                  onClick={() => removeItem(item._id)}
+                  className="bg-red-500 text-white py-1 px-3 rounded text-sm hover:bg-red-600 transition duration-200"
+                >
+                  <FontAwesomeIcon icon={faTrash} /> Remove
+                </button>
               </div>
             </div>
           ))}

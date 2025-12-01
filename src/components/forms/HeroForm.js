@@ -37,7 +37,7 @@ export default function HeroForm({user}) {
     type="submit"
     className="bg-blue-500 text-white py-4 px-6 whitespace-nowrap hover:bg-blue-600 transition-colors"
   >
-    Join for Free
+    Join
   </button>
 </form>
 

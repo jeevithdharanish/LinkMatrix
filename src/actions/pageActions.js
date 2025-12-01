@@ -164,6 +164,7 @@ export async function savePageEducation(uri, educationData) {
       degree: eduItem.degree,
       start: eduItem.start,
       end: eduItem.end,
+      cgpa: eduItem.cgpa || '',
       description: eduItem.description,
       owner: userEmail,
       pageUri: uri,
@@ -181,28 +182,46 @@ export async function savePageEducation(uri, educationData) {
   }
 }
 
-// This function is correct
+// Updated to support categorized skills with proficiency
 export async function savePageSkills(uri, skillsData) {
-  await mongoose.connect(process.env.MONGO_URI);
-  
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new Error('Unauthorized');
-  }
-
-  if (!uri || !Array.isArray(skillsData) || !skillsData.every(s => typeof s === 'string')) {
-    throw new Error('Invalid skills data. Must be an array of strings.');
-  }
-
   try {
+    await mongoose.connect(process.env.MONGO_URI);
+    
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return { success: false, message: 'Unauthorized. Please log in.' };
+    }
+
+    console.log("=== savePageSkills DEBUG ===");
+    console.log("URI:", uri);
+    console.log("Session email:", session.user.email);
+    console.log("Skills data received:", JSON.stringify(skillsData, null, 2));
+
+    // Support both old format (array of strings) and new format (categorized object)
+    if (!uri) {
+      return { success: false, message: 'URI is required.' };
+    }
+
+    // Validate the skills data structure
+    if (skillsData === null || skillsData === undefined) {
+      return { success: false, message: 'Invalid skills data format.' };
+    }
+
+    // Find and update the page by owner email (more reliable than uri match)
     const result = await Page.updateOne(
-      { owner: session.user.email, uri: uri },
+      { owner: session.user.email },
       { $set: { skills: skillsData } }
     );
+
+    console.log("Update result:", JSON.stringify(result, null, 2));
 
     if (result.matchedCount === 0) {
       return { success: false, message: 'Page not found or permission denied.' };
     }
+
+    // Verify the save
+    const verifyPage = await Page.findOne({ owner: session.user.email });
+    console.log("Verified skills in DB:", JSON.stringify(verifyPage?.skills, null, 2));
 
     return { success: true };
 

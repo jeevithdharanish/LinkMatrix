@@ -124,34 +124,41 @@ export default function PageSettingsForm({page, user}) {
               </div>
             </div>
           </div>
-          <div className="p-0">
-            <label className="input-label" htmlFor="nameIn">Display name</label>
-            <input
-              type="text"
-              id="nameIn"
-              name="displayName"
-              defaultValue={page.displayName}
-              placeholder="John Doe"
-              className="border border-gray-300 focus:border-black focus:ring-0 rounded-md p-2"
-            />
-            <label className="input-label" htmlFor="locationIn">Location</label>
-            <input
-              type="text"
-              id="locationIn"
-              name="location"
-              defaultValue={page.location}
-              placeholder="Somewhere in the world"
-              className="border border-gray-300 focus:border-black focus:ring-0 rounded-md p-2"
-            />
-            <label className="input-label" htmlFor="bioIn">Bio</label>
-            <textarea
-              name="bio"
-              defaultValue={page.bio}
-              id="bioIn"
-              placeholder="Your bio goes here..."
-              className="border border-gray-300 focus:border-black focus:ring-0 rounded-md p-2"
-            />
-            <div className="max-w-[200px] mx-auto">
+          <div className="p-0 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="nameIn">Display name</label>
+              <input
+                type="text"
+                id="nameIn"
+                name="displayName"
+                defaultValue={page.displayName}
+                placeholder="John Doe"
+                className="w-full border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg p-3 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="locationIn">Location</label>
+              <input
+                type="text"
+                id="locationIn"
+                name="location"
+                defaultValue={page.location}
+                placeholder="Somewhere in the world"
+                className="w-full border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg p-3 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="bioIn">Bio</label>
+              <textarea
+                name="bio"
+                defaultValue={page.bio}
+                id="bioIn"
+                placeholder="Your bio goes here..."
+                rows={3}
+                className="w-full border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg p-3 transition-colors resize-none"
+              />
+            </div>
+            <div className="max-w-[200px] mx-auto pt-2">
               <SubmitButton>
                 <FontAwesomeIcon icon={faSave} />
                 <span>Save</span>

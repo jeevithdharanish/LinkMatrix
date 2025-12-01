@@ -146,93 +146,118 @@ export default async function AnalyticsPage() {
   }));
 
   return (
-    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
-        <p className="text-gray-600">Track your page performance and link engagement</p>
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <a 
+                href="/account" 
+                className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Editor
+              </a>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold">Analytics Dashboard</h1>
+            <p className="text-indigo-100 mt-1">Track your portfolio performance</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 text-center">
+              <p className="text-2xl font-bold">{totalViews.toLocaleString()}</p>
+              <p className="text-xs text-indigo-100">Total Views</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 text-center">
+              <p className="text-2xl font-bold">{(totalLinkClicks + totalSocialClicks + totalProjectClicks).toLocaleString()}</p>
+              <p className="text-xs text-indigo-100">Total Clicks</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Summary Cards Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Total Views */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-200 transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Views</p>
               <p className="text-2xl font-bold text-gray-900">{totalViews.toLocaleString()}</p>
-              <p className="text-xs text-green-600 mt-1">
+              <p className="text-xs text-emerald-600 mt-1 flex items-center">
                 <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
                 {todayViews} today
               </p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <FontAwesomeIcon icon={faEye} className="text-xl text-green-600" />
+            <div className="p-3 bg-emerald-100 rounded-xl">
+              <FontAwesomeIcon icon={faEye} className="text-xl text-emerald-600" />
             </div>
           </div>
         </div>
 
         {/* Link Clicks */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Link Clicks</p>
               <p className="text-2xl font-bold text-gray-900">{totalLinkClicks.toLocaleString()}</p>
-              <p className="text-xs text-blue-600 mt-1">
+              <p className="text-xs text-blue-600 mt-1 flex items-center">
                 <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
                 {todayLinkClicks} today
               </p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
+            <div className="p-3 bg-blue-100 rounded-xl">
               <FontAwesomeIcon icon={faLink} className="text-xl text-blue-600" />
             </div>
           </div>
         </div>
 
         {/* Social Clicks */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Social Clicks</p>
               <p className="text-2xl font-bold text-gray-900">{totalSocialClicks.toLocaleString()}</p>
-              <p className="text-xs text-purple-600 mt-1">
+              <p className="text-xs text-purple-600 mt-1 flex items-center">
                 <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
                 {todaySocialClicks} today
               </p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
+            <div className="p-3 bg-purple-100 rounded-xl">
               <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xl text-purple-600" />
             </div>
           </div>
         </div>
 
         {/* Project Clicks (NEW CARD) */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-rose-200 transition-all duration-200">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Project Clicks</p>
               <p className="text-2xl font-bold text-gray-900">{totalProjectClicks.toLocaleString()}</p>
-              <p className="text-xs text-red-600 mt-1">
+              <p className="text-xs text-rose-600 mt-1 flex items-center">
                 <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
                 {todayProjectClicks} today
               </p>
             </div>
-            <div className="p-3 bg-red-100 rounded-lg">
-              <FontAwesomeIcon icon={faProjectDiagram} className="text-xl text-red-600" />
+            <div className="p-3 bg-rose-100 rounded-xl">
+              <FontAwesomeIcon icon={faProjectDiagram} className="text-xl text-rose-600" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Chart */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Views Over Time</h2>
         <Chart data={chartData} />
       </div>
 
       {/* Top Performing Links (Shows only main links) */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Top Performing Links</h2>
         {topLinks.length > 0 ? (
           <div className="space-y-4">
@@ -276,7 +301,7 @@ export default async function AnalyticsPage() {
       </div>
 
       {/* Socials Performance */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Socials Performance</h2>
         {Object.keys(page.buttons || {}).length > 0 ? (
           <div className="space-y-4">
@@ -321,7 +346,7 @@ export default async function AnalyticsPage() {
       </div>
 
       {/* Projects Performance (NEW SECTION) */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Projects Performance</h2>
         {projects.length > 0 ? (
           <div className="space-y-4">
@@ -375,7 +400,7 @@ export default async function AnalyticsPage() {
       </div>
 
       {/* Detailed Link Analytics */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">All Links Performance</h2>
         {page.links.length > 0 ? (
           <div className="space-y-4">

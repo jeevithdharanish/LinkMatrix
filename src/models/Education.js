@@ -6,6 +6,7 @@ const EducationSchema = new Schema({
   degree: { type: String, default: '' },
   start: { type: String, default: '' },
   end: { type: String, default: '' },
+  cgpa: { type: String, default: '' }, // CGPA or GPA
   description: { type: String, default: '' },
   owner: { type: String, required: true }, // The email of the user who owns this entry
   pageUri: { type: String, required: true }, // The 'uri' of the page this links to
