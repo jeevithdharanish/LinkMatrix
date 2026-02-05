@@ -78,6 +78,7 @@ import SkillsSection from "@/components/profile/SkillsSection";
 import WorkExperienceSection from "@/components/profile/WorkExperienceSection";
 import EducationSection from "@/components/profile/EducationSection";
 import ProjectSection from "@/components/profile/ProjectSection";
+import ParticleNetwork from "@/components/animations/ParticleNetwork";
 
 export const buttonsIcons = {
   email: faEnvelope,
@@ -201,12 +202,12 @@ export default async function UserPage({ params }) {
             <div className="absolute inset-0">
               <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"></div>
               
+              {/* Particle Network Animation */}
+              <ParticleNetwork className="opacity-60" />
+              
               {/* Animated gradient orbs */}
               <div className="absolute top-1/4 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
               <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-              
-              {/* Grid pattern */}
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:80px_80px]"></div>
             </div>
 
             {/* Content Container */}
