@@ -117,22 +117,25 @@ export default function PageLinksForm({ page, user }) {
                 </div>
                 <div className="grow space-y-2 mt-3 md:mt-0">
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Title</label>
+                    <label htmlFor={`title-${l.key}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Title</label>
                     <input
+                      id={`title-${l.key}`}
                       value={l.title}
                       onChange={ev => handleLinkChange(l.key, 'title', ev)}
                       type="text" placeholder="Title" className="border border-gray-200 rounded-xl p-2.5 w-full text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Subtitle</label>
+                    <label htmlFor={`subtitle-${l.key}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Subtitle</label>
                     <input
+                      id={`subtitle-${l.key}`}
                       value={l.subtitle}
                       onChange={ev => handleLinkChange(l.key, 'subtitle', ev)}
                       type="text" placeholder="Subtitle (optional)" className="border border-gray-200 rounded-xl p-2.5 w-full text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">URL</label>
+                    <label htmlFor={`url-${l.key}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">URL</label>
                     <input
+                      id={`url-${l.key}`}
                       value={l.url}
                       onChange={ev => handleLinkChange(l.key, 'url', ev)}
                       type="text" placeholder="https://..." className="border border-gray-200 rounded-xl p-2.5 w-full text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />

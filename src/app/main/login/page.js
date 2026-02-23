@@ -40,7 +40,10 @@ export default function LoginPage({ searchParams }) {
           <LoginWithGoogle />
         </div>
         <p className="text-center text-xs text-slate-500 mt-6">
-          By signing in, you agree to our Terms of Service
+          By signing in, you agree to our{' '}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline">
+            Terms of Service
+          </a>
         </p>
       </div>
     </div>

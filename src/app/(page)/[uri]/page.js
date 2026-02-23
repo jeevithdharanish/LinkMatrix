@@ -21,7 +21,7 @@ const getCachedPageData = unstable_cache(
 export async function generateMetadata({ params }) {
   try {
     const page = await getCachedPageData(params.uri);
-    
+
     if (!page) {
       return {
         title: 'Portfolio Not Found | LinkMatrix',
@@ -67,8 +67,8 @@ import {
   faDiscord, faFacebook, faGithub, faInstagram, faTelegram,
   faTiktok, faWhatsapp, faYoutube, faLinkedin
 } from "@fortawesome/free-brands-svg-icons";
-import { 
-  faEnvelope, faLink, faLocationDot, faMobile, faFileAlt, faCode, 
+import {
+  faEnvelope, faLink, faLocationDot, faMobile, faFileAlt, faCode,
   faArrowUpRightFromSquare, faShareNodes, faDownload, faArrowDown,
   faHeart, faCopyright, faChevronUp
 } from "@fortawesome/free-solid-svg-icons";
@@ -79,6 +79,7 @@ import WorkExperienceSection from "@/components/profile/WorkExperienceSection";
 import EducationSection from "@/components/profile/EducationSection";
 import ProjectSection from "@/components/profile/ProjectSection";
 import ParticleNetwork from "@/components/animations/ParticleNetwork";
+import ScrollReveal from "@/components/animations/ScrollReveal";
 
 export const buttonsIcons = {
   email: faEnvelope,
@@ -125,7 +126,7 @@ export default async function UserPage({ params }) {
 
   try {
     await connectToDatabase();
-    
+
     // Use cached page data (same cache as generateMetadata)
     const pageData = await getCachedPageData(uri);
 
@@ -145,10 +146,10 @@ export default async function UserPage({ params }) {
     const serializedEducation = JSON.parse(JSON.stringify(education));
     const serializedProjects = JSON.parse(JSON.stringify(projects));
     const serializedWorkExperience = JSON.parse(JSON.stringify(workExperience));
-    
+
     // Track page view - non-blocking (don't await)
-    Event.create({ uri: uri, page: uri, type: 'view' }).catch(() => {});
-    
+    Event.create({ uri: uri, page: uri, type: 'view' }).catch(() => { });
+
     const sortedButtons = Object.keys(pageData.buttons || {})
       .sort()
       .reduce((obj, key) => {
@@ -168,16 +169,16 @@ export default async function UserPage({ params }) {
 
     return (
       <div className="bg-slate-950 text-white min-h-screen overflow-x-hidden">
-        
+
         {/* === HERO SECTION - Split Layout === */}
         <section className="relative min-h-screen flex">
-          
+
           {/* LEFT SIDE - Profile Image (Full Height) */}
           <div className="hidden lg:block lg:w-1/2 xl:w-2/5 relative overflow-hidden">
             {/* Background gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/50 via-transparent to-slate-950 z-10"></div>
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10"></div>
-            
+
             {/* Profile Image - Full Cover */}
             <div className="absolute inset-0">
               <Image
@@ -189,7 +190,7 @@ export default async function UserPage({ params }) {
                 sizes="50vw"
               />
             </div>
-            
+
             {/* Decorative elements */}
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent z-10"></div>
             <div className="absolute top-10 left-10 w-20 h-20 border-l-2 border-t-2 border-blue-500/30 z-20"></div>
@@ -201,10 +202,10 @@ export default async function UserPage({ params }) {
             {/* Animated Background for right side */}
             <div className="absolute inset-0">
               <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"></div>
-              
+
               {/* Particle Network Animation */}
               <ParticleNetwork className="opacity-60" />
-              
+
               {/* Animated gradient orbs */}
               <div className="absolute top-1/4 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
               <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -212,7 +213,7 @@ export default async function UserPage({ params }) {
 
             {/* Content Container */}
             <div className="relative z-10 px-8 md:px-12 lg:px-16 xl:px-20 py-20 w-full">
-              
+
               {/* Mobile Profile Image */}
               <div className="lg:hidden mb-10 flex justify-center">
                 <div className="relative">
@@ -274,7 +275,7 @@ export default async function UserPage({ params }) {
                     Download Resume
                   </Link>
                 )}
-               
+
               </div>
 
               {/* Social Links */}
@@ -286,7 +287,7 @@ export default async function UserPage({ params }) {
                       const url = buttonLink(buttonKey, pageData.buttons[buttonKey]);
                       const pingUrl = `${baseUrl}api/click?url=${btoa(url)}&page=${pageData.uri}&clickType=social`;
                       const style = buttonStyles[buttonKey] || { bg: "bg-blue-500", hover: "hover:bg-blue-600" };
-                      
+
                       return (
                         <Link
                           key={buttonKey}
@@ -324,7 +325,7 @@ export default async function UserPage({ params }) {
 
         {/* === MAIN CONTENT === */}
         <main className="relative">
-          
+
           {/* About Section */}
           {pageData.summary && (
             <section id="about" className="py-24 bg-slate-900/50">
@@ -347,58 +348,66 @@ export default async function UserPage({ params }) {
           {(pageData.links || []).length > 0 && (
             <section id="links" className="py-24 bg-slate-900/50">
               <div className="max-w-4xl mx-auto px-6 lg:px-8">
-                <div className="text-center mb-12">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-cyan-400 text-sm font-medium mb-4">
-                    <FontAwesomeIcon icon={faLink} className="w-4 h-4" />
-                    Resources
-                  </span>
-                  <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent mb-4">
-                    Featured Links
-                  </h2>
-                  <p className="text-slate-400">Check out my profiles and resources</p>
-                </div>
-                
+                <ScrollReveal animation="fade-up">
+                  <div className="text-center mb-12">
+                    <span className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-cyan-400 text-sm font-medium mb-4">
+                      <FontAwesomeIcon icon={faLink} className="w-4 h-4" />
+                      Resources
+                    </span>
+                    <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent mb-4">
+                      Featured Links
+                    </h2>
+                    <p className="text-slate-400">Check out my profiles and resources</p>
+                  </div>
+                </ScrollReveal>
+
                 <div className="grid gap-4 md:grid-cols-2">
                   {(pageData.links || []).map((link, index) => (
-                    <Link
+                    <ScrollReveal
                       key={`${link.url}-${index}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}&clickType=link`}
-                      className="group flex items-center gap-4 p-5 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl hover:bg-slate-800 hover:border-cyan-500/50 transition-all duration-300 hover:-translate-y-1"
-                      href={link.url}
+                      animation="fade-up"
+                      stagger={100}
+                      staggerIndex={index}
                     >
-                      <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl flex items-center justify-center overflow-hidden group-hover:from-cyan-500/30 group-hover:to-blue-500/30 transition-all duration-300">
-                        {link.icon ? (
-                          <Image
-                            className="w-full h-full object-cover rounded-xl"
-                            src={link.icon}
-                            alt={`${link.title} icon`}
-                            width={56}
-                            height={56}
-                          />
-                        ) : (
-                          <FontAwesomeIcon
-                            icon={faLink}
-                            className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300"
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-white text-lg mb-1 truncate group-hover:text-cyan-400 transition-colors duration-300">
-                          {link.title}
-                        </h3>
-                        {link.subtitle && (
-                          <p className="text-slate-500 text-sm truncate">
-                            {link.subtitle}
-                          </p>
-                        )}
-                      </div>
-                      <FontAwesomeIcon 
-                        icon={faArrowUpRightFromSquare} 
-                        className="w-5 h-5 text-slate-600 group-hover:text-cyan-400 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" 
-                      />
-                    </Link>
+                      <Link
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}&clickType=link`}
+                        className="group flex items-center gap-4 p-5 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl hover:bg-slate-800 hover:border-cyan-500/50 transition-all duration-300 hover:-translate-y-1"
+                        href={link.url}
+                      >
+                        <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-xl flex items-center justify-center overflow-hidden group-hover:from-cyan-500/30 group-hover:to-blue-500/30 transition-all duration-300">
+                          {link.icon ? (
+                            <Image
+                              className="w-full h-full object-cover rounded-xl"
+                              src={link.icon}
+                              alt={`${link.title} icon`}
+                              width={56}
+                              height={56}
+                            />
+                          ) : (
+                            <FontAwesomeIcon
+                              icon={faLink}
+                              className="w-6 h-6 text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-white text-lg mb-1 truncate group-hover:text-cyan-400 transition-colors duration-300">
+                            {link.title}
+                          </h3>
+                          {link.subtitle && (
+                            <p className="text-slate-500 text-sm truncate">
+                              {link.subtitle}
+                            </p>
+                          )}
+                        </div>
+                        <FontAwesomeIcon
+                          icon={faArrowUpRightFromSquare}
+                          className="w-5 h-5 text-slate-600 group-hover:text-cyan-400 transition-all duration-300 group-hover:translate-x-1 group-hover:-translate-y-1"
+                        />
+                      </Link>
+                    </ScrollReveal>
                   ))}
                 </div>
               </div>
@@ -418,10 +427,10 @@ export default async function UserPage({ params }) {
           {serializedProjects?.length > 0 && (
             <section id="projects" className="py-24 bg-slate-900/50">
               <div className="max-w-6xl mx-auto px-6 lg:px-8">
-                <ProjectSection 
-                  projects={serializedProjects} 
-                  baseUrl={baseUrl} 
-                  pageUri={pageData.uri} 
+                <ProjectSection
+                  projects={serializedProjects}
+                  baseUrl={baseUrl}
+                  pageUri={pageData.uri}
                 />
               </div>
             </section>
@@ -439,44 +448,48 @@ export default async function UserPage({ params }) {
           {/* Contact Section */}
           <section id="contact" className="py-24 bg-gradient-to-b from-slate-900/50 to-slate-950">
             <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-              <h2 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent mb-6">
-                Let&apos;s Work Together
-              </h2>
-              <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
-                Have a project in mind? I&apos;d love to hear about it. Send me a message and let&apos;s create something amazing together.
-              </p>
-              
-              <div className="flex flex-wrap gap-4 justify-center">
-                {pageData.buttons?.email && (
-                  <Link
-                    href={`mailto:${pageData.buttons.email}`}
-                    className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105"
-                  >
-                    <FontAwesomeIcon icon={faEnvelope} className="w-5 h-5" />
-                    Send Email
-                  </Link>
-                )}
-                {pageData.buttons?.linkedin && (
-                  <Link
-                    href={pageData.buttons.linkedin}
-                    target="_blank"
-                    className="inline-flex items-center gap-3 px-8 py-4 bg-blue-700 text-white rounded-full font-semibold text-lg hover:bg-blue-800 transition-all duration-300 shadow-lg hover:scale-105"
-                  >
-                    <FontAwesomeIcon icon={faLinkedin} className="w-5 h-5" />
-                    LinkedIn
-                  </Link>
-                )}
-                {pageData.buttons?.github && (
-                  <Link
-                    href={pageData.buttons.github}
-                    target="_blank"
-                    className="inline-flex items-center gap-3 px-8 py-4 bg-slate-800 border border-slate-700 text-white rounded-full font-semibold text-lg hover:bg-slate-700 transition-all duration-300 hover:scale-105"
-                  >
-                    <FontAwesomeIcon icon={faGithub} className="w-5 h-5" />
-                    GitHub
-                  </Link>
-                )}
-              </div>
+              <ScrollReveal animation="fade-up">
+                <h2 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent mb-6">
+                  Let&apos;s Work Together
+                </h2>
+                <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
+                  Have a project in mind? I&apos;d love to hear about it. Send me a message and let&apos;s create something amazing together.
+                </p>
+              </ScrollReveal>
+
+              <ScrollReveal animation="scale-up" delay={200}>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {pageData.buttons?.email && (
+                    <Link
+                      href={`mailto:${pageData.buttons.email}`}
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105"
+                    >
+                      <FontAwesomeIcon icon={faEnvelope} className="w-5 h-5" />
+                      Send Email
+                    </Link>
+                  )}
+                  {pageData.buttons?.linkedin && (
+                    <Link
+                      href={pageData.buttons.linkedin}
+                      target="_blank"
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-blue-700 text-white rounded-full font-semibold text-lg hover:bg-blue-800 transition-all duration-300 shadow-lg hover:scale-105"
+                    >
+                      <FontAwesomeIcon icon={faLinkedin} className="w-5 h-5" />
+                      LinkedIn
+                    </Link>
+                  )}
+                  {pageData.buttons?.github && (
+                    <Link
+                      href={pageData.buttons.github}
+                      target="_blank"
+                      className="inline-flex items-center gap-3 px-8 py-4 bg-slate-800 border border-slate-700 text-white rounded-full font-semibold text-lg hover:bg-slate-700 transition-all duration-300 hover:scale-105"
+                    >
+                      <FontAwesomeIcon icon={faGithub} className="w-5 h-5" />
+                      GitHub
+                    </Link>
+                  )}
+                </div>
+              </ScrollReveal>
             </div>
           </section>
         </main>
@@ -516,8 +529,8 @@ export default async function UserPage({ params }) {
           </div>
           <h1 className="text-2xl font-bold text-white mb-3">Something went wrong</h1>
           <p className="text-slate-400 mb-8">We couldn&apos;t load this portfolio. Please try again later.</p>
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
           >
             Go Home

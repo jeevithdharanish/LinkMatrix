@@ -128,8 +128,8 @@ export default function PageSkillsForm({ page, initialSkills }) {
               type="button"
               onClick={() => setActiveCategory(cat.name)}
               className={`px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${activeCategory === cat.name
-                  ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
-                  : 'bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100 hover:text-gray-700'
+                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                : 'bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100 hover:text-gray-700'
                 }`}
             >
               <FontAwesomeIcon icon={cat.icon} className="w-3 h-3" />
@@ -223,6 +223,7 @@ export default function PageSkillsForm({ page, initialSkills }) {
                       <button
                         type="button"
                         onClick={() => removeSkill(activeCategory, skill.name)}
+                        aria-label={`Remove ${skill.name}`}
                         className="p-0.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <FontAwesomeIcon icon={faTimes} className="w-2.5 h-2.5" />
@@ -262,6 +263,7 @@ export default function PageSkillsForm({ page, initialSkills }) {
                       <button
                         type="button"
                         onClick={() => removeSkill(activeCategory, skill.name)}
+                        aria-label={`Remove ${skill.name} skill`}
                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
                       >
                         <FontAwesomeIcon icon={faTimes} className="w-3.5 h-3.5" />
@@ -286,8 +288,8 @@ export default function PageSkillsForm({ page, initialSkills }) {
                   key={cat.name}
                   onClick={() => setActiveCategory(cat.name)}
                   className={`rounded-xl p-3 text-center border transition-all duration-200 ${activeCategory === cat.name
-                      ? 'bg-indigo-50 border-indigo-200'
-                      : 'bg-white border-gray-200 hover:border-gray-300'
+                    ? 'bg-indigo-50 border-indigo-200'
+                    : 'bg-white border-gray-200 hover:border-gray-300'
                     }`}
                 >
                   <FontAwesomeIcon icon={cat.icon} className={`w-4 h-4 mb-1 ${activeCategory === cat.name ? 'text-indigo-500' : 'text-gray-400'}`} />

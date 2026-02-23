@@ -3,7 +3,7 @@ import AppSidebar from "@/components/layout/AppSideBar";
 import { Page } from "@/models/page";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import mongoose from "mongoose";
+import { connectToDatabase } from "@/libs/mongoClient";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -15,8 +15,13 @@ export default async function AppTemplate({ children }) {
     return redirect('/');
   }
 
-  await mongoose.connect(process.env.MONGO_URI);
-  const page = await Page.findOne({ owner: session.user.email });
+  let page = null;
+  try {
+    await connectToDatabase();
+    page = await Page.findOne({ owner: session.user.email });
+  } catch (error) {
+    console.error('Error loading page data:', error);
+  }
 
   return (
     <>
@@ -42,31 +47,45 @@ export default async function AppTemplate({ children }) {
         <input type="checkbox" id="navCb" className="hidden peer" />
 
         {/* Backdrop */}
-        <label htmlFor="navCb" className="backdrop fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden opacity-0 invisible peer-checked:opacity-100 peer-checked:visible transition-all duration-300"></label>
+        <label
+          htmlFor="navCb"
+          aria-label="Close navigation"
+          className="backdrop fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden opacity-0 invisible peer-checked:opacity-100 peer-checked:visible transition-all duration-300"
+        ></label>
 
         {/* Sidebar */}
         <aside className="bg-slate-900 peer-checked:left-0 w-64 p-5 pt-6 shadow-2xl fixed md:sticky md:top-0 md:h-screen -left-64 md:left-0 top-0 bottom-0 z-50 transition-all duration-300 ease-in-out flex flex-col sidebar-scroll overflow-y-auto">
           {/* Close button for mobile */}
           <label
             htmlFor="navCb"
+            aria-label="Close navigation"
             className="md:hidden absolute top-4 right-4 p-2 cursor-pointer hover:bg-white/10 rounded-lg transition-colors z-50"
           >
-            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg aria-hidden="true" className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
+            <span className="sr-only">Close navigation</span>
           </label>
 
           {/* User Section */}
           <div className="pt-4">
             <div className="flex flex-col items-center mb-6">
               <div className="w-16 h-16 rounded-full ring-2 ring-indigo-500/30 ring-offset-2 ring-offset-slate-900 overflow-hidden shadow-lg mb-3">
-                <Image
-                  className="w-full h-full object-cover"
-                  src={session.user.image}
-                  alt="avatar"
-                  width={128}
-                  height={128}
-                />
+                {session.user?.image ? (
+                  <Image
+                    className="w-full h-full object-cover"
+                    src={session.user.image}
+                    alt="avatar"
+                    width={128}
+                    height={128}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
+                    <span className="text-white text-xl font-bold">
+                      {session.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                    </span>
+                  </div>
+                )}
               </div>
               {page && (
                 <div className="text-center">

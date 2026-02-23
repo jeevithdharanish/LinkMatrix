@@ -12,7 +12,7 @@ export default function HeroForm({ user }) {
     const username = input.value;
     if (username.length > 0) {
       if (user) {
-        router.push('/account?desiredUsername=' + username);
+        router.push('/account?desiredUsername=' + encodeURIComponent(username));
       } else {
         window.localStorage.setItem('desiredUsername', username);
         router.push(`/login?username=${encodeURIComponent(username)}`);
@@ -26,12 +26,14 @@ export default function HeroForm({ user }) {
         onSubmit={handleSubmit}
         className="inline-flex items-center bg-white border border-gray-200 shadow-elevated rounded-2xl overflow-hidden max-w-md mx-auto w-full"
       >
-        <span className="bg-white py-4 pl-5 text-gray-400 font-medium text-sm">linkto/</span>
+        <span className="bg-white py-4 pl-5 text-gray-400 font-medium text-sm"><label htmlFor="hero-username" className="sr-only">Username</label>linkto/</span>
         <input
+          id="hero-username"
           type="text"
           className="outline-none flex-1 text-gray-900 font-medium"
           style={{ backgroundColor: 'white', marginBottom: 0, paddingLeft: 0, border: 'none', boxShadow: 'none' }}
           placeholder="username"
+          aria-label="Choose your username"
         />
         <button
           type="submit"

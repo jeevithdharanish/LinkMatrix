@@ -8,8 +8,18 @@ import { faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
 import SectionBox from "@/components/layout/SectionBox";
 import SubmitButton from "../buttons/SubmitButton";
 
+let nextId = 1;
+function generateId() {
+  return `edu_${Date.now()}_${nextId++}`;
+}
+
 export default function PageEducationForm({ page, initialEducation }) {
-  const [education, setEducation] = useState(initialEducation || []);
+  const [education, setEducation] = useState(() =>
+    (initialEducation || []).map(edu => ({
+      ...edu,
+      _clientId: edu._id || generateId(),
+    }))
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   async function save(ev) {
@@ -29,7 +39,7 @@ export default function PageEducationForm({ page, initialEducation }) {
 
   function addNewEducation() {
     setEducation(prev => [
-      { school: "", degree: "", start: "", end: "", cgpa: "", description: "" },
+      { _clientId: generateId(), school: "", degree: "", start: "", end: "", cgpa: "", description: "" },
       ...prev,
     ]);
   }
@@ -72,11 +82,12 @@ export default function PageEducationForm({ page, initialEducation }) {
           )}
 
           {education.map((edu, idx) => (
-            <div key={idx} className="p-4 bg-gray-50/50 rounded-xl border border-gray-200 hover:border-indigo-200 transition-all duration-200">
+            <div key={edu._clientId} className="p-4 bg-gray-50/50 rounded-xl border border-gray-200 hover:border-indigo-200 transition-all duration-200">
               <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">School / University</label>
+                <label htmlFor={`school-${edu._clientId}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">School / University</label>
                 <input
-                  value={edu.school}
+                  id={`school-${edu._clientId}`}
+                  value={edu.school || ''}
                   onChange={(e) => updateEdu(idx, "school", e.target.value)}
                   placeholder="e.g., MIT, Stanford University"
                   className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
@@ -84,9 +95,10 @@ export default function PageEducationForm({ page, initialEducation }) {
               </div>
 
               <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Degree / Major</label>
+                <label htmlFor={`degree-${edu._clientId}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Degree / Major</label>
                 <input
-                  value={edu.degree}
+                  id={`degree-${edu._clientId}`}
+                  value={edu.degree || ''}
                   onChange={(e) => updateEdu(idx, "degree", e.target.value)}
                   placeholder="e.g., B.Tech in Computer Science"
                   className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
@@ -95,26 +107,29 @@ export default function PageEducationForm({ page, initialEducation }) {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Start Year</label>
+                  <label htmlFor={`start-${edu._clientId}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Start Year</label>
                   <input
-                    value={edu.start}
+                    id={`start-${edu._clientId}`}
+                    value={edu.start || ''}
                     onChange={(e) => updateEdu(idx, "start", e.target.value)}
                     placeholder="e.g., 2020"
                     className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">End Year</label>
+                  <label htmlFor={`end-${edu._clientId}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">End Year</label>
                   <input
-                    value={edu.end}
+                    id={`end-${edu._clientId}`}
+                    value={edu.end || ''}
                     onChange={(e) => updateEdu(idx, "end", e.target.value)}
                     placeholder="e.g., 2024 or Present"
                     className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">CGPA / GPA</label>
+                  <label htmlFor={`cgpa-${edu._clientId}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">CGPA / GPA</label>
                   <input
+                    id={`cgpa-${edu._clientId}`}
                     value={edu.cgpa || ''}
                     onChange={(e) => updateEdu(idx, "cgpa", e.target.value)}
                     placeholder="e.g., 8.5/10"
@@ -124,9 +139,10 @@ export default function PageEducationForm({ page, initialEducation }) {
               </div>
 
               <div className="mb-2">
-                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Description / Achievements</label>
+                <label htmlFor={`desc-${edu._clientId}`} className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Description / Achievements</label>
                 <textarea
-                  value={edu.description}
+                  id={`desc-${edu._clientId}`}
+                  value={edu.description || ''}
                   onChange={(e) => updateEdu(idx, "description", e.target.value)}
                   placeholder="Relevant coursework, achievements, honors, activities..."
                   rows={3}
@@ -138,6 +154,7 @@ export default function PageEducationForm({ page, initialEducation }) {
                 <button
                   onClick={() => removeEdu(idx)}
                   type="button"
+                  aria-label={`Remove ${edu.school || 'this'} education entry`}
                   className="bg-red-50 text-red-500 py-1.5 px-3 rounded-xl text-xs font-medium hover:bg-red-100 transition duration-200"
                 >
                   <FontAwesomeIcon icon={faTrash} className="mr-1" /> Remove

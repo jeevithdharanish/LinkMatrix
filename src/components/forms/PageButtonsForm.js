@@ -95,6 +95,7 @@ export default function PageButtonsForm({ user, page }) {
                   <button
                     onClick={() => removeButton(b)}
                     type="button"
+                    aria-label={`Remove ${upperFirst(b.label)} button`}
                     className="py-2 px-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all duration-200 flex-shrink-0">
                     <FontAwesomeIcon icon={faTrash} className="text-sm" />
                   </button>

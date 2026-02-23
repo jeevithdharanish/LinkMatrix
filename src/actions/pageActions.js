@@ -75,11 +75,13 @@ export async function savePageSettings(formData) {
     );
 
     if (formData.has('avatar')) {
-      const avatarLink = formData.get('avatar');
-      await User.updateOne(
-        { email: session.user?.email },
-        { image: avatarLink },
-      );
+      const avatarLink = sanitizeUrl(formData.get('avatar'));
+      if (avatarLink) {
+        await User.updateOne(
+          { email: session.user?.email },
+          { image: avatarLink },
+        );
+      }
     }
 
     return { success: true };
@@ -126,10 +128,22 @@ export async function savePageLinks(links) {
 
   try {
     const page = await Page.findOne({ owner: session?.user?.email });
+    if (!page) {
+      return { success: false, message: 'Page not found.' };
+    }
     const currentLinks = page.links || [];
 
+    // Sanitize incoming links
+    const sanitizedLinks = links.map(link => ({
+      key: link.key,
+      title: sanitizeString(link.title, 200),
+      subtitle: sanitizeString(link.subtitle, 500),
+      icon: link.icon ? sanitizeUrl(link.icon) : '',
+      url: sanitizeUrl(link.url),
+    }));
+
     // Find deleted links
-    const newLinkUrls = links.map(link => link.url);
+    const newLinkUrls = sanitizedLinks.map(link => link.url);
     const deletedLinks = currentLinks.filter(link => !newLinkUrls.includes(link.url));
 
     // Store deleted links
@@ -155,7 +169,7 @@ export async function savePageLinks(links) {
 
     // Check for restored links
     const currentLinkUrls = currentLinks.map(link => link.url);
-    const restoredLinks = links.filter(link => !currentLinkUrls.includes(link.url));
+    const restoredLinks = sanitizedLinks.filter(link => !currentLinkUrls.includes(link.url));
 
     for (const restoredLink of restoredLinks) {
       await DeletedLink.deleteMany({
@@ -165,10 +179,10 @@ export async function savePageLinks(links) {
       });
     }
 
-    // Update page with new links
+    // Update page with sanitized links
     await Page.updateOne(
       { owner: session?.user?.email },
-      { links },
+      { links: sanitizedLinks },
     );
 
     return { success: true };

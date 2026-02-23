@@ -24,22 +24,32 @@ export default async function grabUsername({ username }) {
     return { success: false, message: 'You must be logged in.' };
   }
 
-  // Check if username is already taken
-  const existingPageDoc = await Page.findOne({ uri: trimmed });
-  if (existingPageDoc) {
-    return false;
-  }
-
   // Check if user already has a page
   const existingUserPage = await Page.findOne({ owner: session.user.email });
   if (existingUserPage) {
     return { success: false, message: 'You already have a page.' };
   }
 
-  const newPage = await Page.create({
-    uri: trimmed,
-    owner: session.user.email,
-  });
+  // Atomic upsert — race-safe username claim
+  try {
+    const existing = await Page.findOneAndUpdate(
+      { uri: trimmed },
+      { $setOnInsert: { uri: trimmed, owner: session.user.email } },
+      { upsert: true, new: false }
+    );
 
-  return { success: true, uri: newPage.uri };
+    // If existing is not null, a doc with this uri already existed → taken
+    if (existing) {
+      return { success: false, message: 'Username is already taken.' };
+    }
+
+    return { success: true, uri: trimmed };
+  } catch (error) {
+    // Handle duplicate key race (E11000)
+    if (error.code === 11000 || error.name === 'MongoServerError') {
+      return { success: false, message: 'Username is already taken.' };
+    }
+    console.error('Error claiming username:', error);
+    return { success: false, message: 'Something went wrong. Please try again.' };
+  }
 }
