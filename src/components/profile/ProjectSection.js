@@ -2,13 +2,32 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { faExternalLinkAlt, faRocket, faClock, faLaptopCode, faFolder } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
-import { btoa } from "next/dist/compiled/@edge-runtime/primitives";
 import ScrollReveal from "@/components/animations/ScrollReveal";
+
+// URL-safe base64 encoder (works with non-ASCII characters)
+function safeBase64Encode(str) {
+  try {
+    return btoa(unescape(encodeURIComponent(str)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  } catch {
+    return encodeURIComponent(str);
+  }
+}
+
+// Normalize base URL to always end with trailing slash
+function normalizeBaseUrl(url) {
+  if (!url) return '/';
+  return url.endsWith('/') ? url : url + '/';
+}
 
 export default function ProjectSection({ projects, baseUrl, pageUri }) {
   if (!projects || projects.length === 0) {
     return null;
   }
+
+  const normalizedBase = normalizeBaseUrl(baseUrl);
 
   return (
     <section className="group">
@@ -52,7 +71,7 @@ export default function ProjectSection({ projects, baseUrl, pageUri }) {
                         {project.title}
                       </h3>
                       {project.timeTaken && (
-                        <p className="text-sm text-slate-500 mt-2 flex items-center gap-2 ml-13">
+                        <p className="text-sm text-slate-500 mt-2 flex items-center gap-2 ml-[3.25rem]">
                           <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
                           {project.timeTaken}
                         </p>
@@ -64,7 +83,6 @@ export default function ProjectSection({ projects, baseUrl, pageUri }) {
                           <span
                             key={i}
                             className="text-xs font-semibold px-3 py-1.5 bg-slate-700/50 text-slate-300 rounded-lg border border-slate-600/50 hover:border-rose-500/30 transition-colors"
-                            style={{ animationDelay: `${i * 80}ms` }}
                           >
                             {tech.trim()}
                           </span>
@@ -104,7 +122,8 @@ export default function ProjectSection({ projects, baseUrl, pageUri }) {
                       <Link
                         href={project.githubLink}
                         target="_blank"
-                        ping={`${baseUrl}api/click?url=${btoa(project.githubLink)}&page=${pageUri}&clickType=project`}
+                        rel="noopener noreferrer"
+                        ping={`${normalizedBase}api/click?url=${safeBase64Encode(project.githubLink)}&page=${encodeURIComponent(pageUri)}&clickType=project`}
                         className="group/btn inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-sm font-medium transition-all duration-300 hover:scale-105"
                       >
                         <FontAwesomeIcon icon={faGithub} className="w-5 h-5" />
@@ -116,7 +135,8 @@ export default function ProjectSection({ projects, baseUrl, pageUri }) {
                       <Link
                         href={project.liveLink}
                         target="_blank"
-                        ping={`${baseUrl}api/click?url=${btoa(project.liveLink)}&page=${pageUri}&clickType=project`}
+                        rel="noopener noreferrer"
+                        ping={`${normalizedBase}api/click?url=${safeBase64Encode(project.liveLink)}&page=${encodeURIComponent(pageUri)}&clickType=project`}
                         className="group/btn inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-600 hover:to-purple-700 text-white rounded-xl text-sm font-medium transition-all duration-300 hover:scale-105 shadow-lg shadow-rose-500/25"
                       >
                         <FontAwesomeIcon icon={faExternalLinkAlt} className="w-4 h-4" />

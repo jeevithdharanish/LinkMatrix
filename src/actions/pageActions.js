@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import { Education } from "@/models/Education";
 import { WorkExperience } from "@/models/WorkExperience";
 import { Project } from "@/models/Project";
+import mongoose from "mongoose";
 
 // Helper function to sanitize string input
 function sanitizeString(str, maxLength = 1000) {
@@ -40,6 +41,46 @@ function sanitizeUrl(url) {
   return '';
 }
 
+// Helper to sanitize skills data (categorized objects or arrays)
+function sanitizeSkillsData(skillsData) {
+  if (skillsData === null || skillsData === undefined) return {};
+
+  // Old format: array of strings
+  if (Array.isArray(skillsData)) {
+    return {
+      "All Skills": skillsData
+        .slice(0, 50)
+        .map(skill => ({
+          name: sanitizeString(typeof skill === 'string' ? skill : (skill?.name || ''), 100),
+          proficiency: (() => { const p = parseInt(skill?.proficiency, 10); return Math.min(100, Math.max(0, Number.isNaN(p) ? 80 : p)); })(),
+        }))
+        .filter(s => s.name.length > 0),
+    };
+  }
+
+  // New format: { "Category Name": [{ name, proficiency }] }
+  if (typeof skillsData === 'object') {
+    const sanitized = {};
+    const categoryKeys = Object.keys(skillsData).slice(0, 20); // max 20 categories
+    for (const key of categoryKeys) {
+      const safeKey = sanitizeString(key, 100);
+      if (!safeKey) continue;
+      const items = skillsData[key];
+      if (!Array.isArray(items)) continue;
+      sanitized[safeKey] = items
+        .slice(0, 50)
+        .map(item => ({
+          name: sanitizeString(typeof item === 'string' ? item : (item?.name || ''), 100),
+          proficiency: (() => { const p = parseInt(item?.proficiency, 10); return Math.min(100, Math.max(0, Number.isNaN(p) ? 80 : p)); })(),
+        }))
+        .filter(s => s.name.length > 0);
+    }
+    return sanitized;
+  }
+
+  return {};
+}
+
 export async function savePageSettings(formData) {
   await connectToDatabase();
   const session = await getServerSession(authOptions);
@@ -47,7 +88,6 @@ export async function savePageSettings(formData) {
     return { success: false, message: 'Unauthorized' };
   }
 
-  // ### FIX 1: Added try...catch and {success: ...} response ###
   try {
     const dataKeys = [
       'displayName', 'location',
@@ -98,7 +138,6 @@ export async function savePageButtons(formData) {
     return { success: false, message: 'Unauthorized' };
   }
 
-  // ### FIX 1: Added try...catch and {success: ...} response ###
   try {
     const buttonsValues = {};
     formData.forEach((value, key) => {
@@ -135,7 +174,7 @@ export async function savePageLinks(links) {
 
     // Sanitize incoming links
     const sanitizedLinks = links.map(link => ({
-      key: link.key,
+      key: sanitizeString(link.key, 100),
       title: sanitizeString(link.title, 200),
       subtitle: sanitizeString(link.subtitle, 500),
       icon: link.icon ? sanitizeUrl(link.icon) : '',
@@ -206,14 +245,15 @@ export async function savePageEducation(uri, educationData) {
     return { success: false, message: 'Invalid data provided.' };
   }
 
+  const dbSession = await mongoose.startSession();
   try {
+    dbSession.startTransaction();
+
     await Education.deleteMany({
       owner: userEmail,
       pageUri: uri,
-    });
+    }, { session: dbSession });
 
-    // ### FIX 2: Be explicit about which fields to save ###
-    // This prevents saving temporary client-side props like 'id'
     const educationDocsToInsert = educationData.map(eduItem => ({
       school: sanitizeString(eduItem.school, 200),
       degree: sanitizeString(eduItem.degree, 200),
@@ -226,14 +266,18 @@ export async function savePageEducation(uri, educationData) {
     }));
 
     if (educationDocsToInsert.length > 0) {
-      await Education.insertMany(educationDocsToInsert);
+      await Education.insertMany(educationDocsToInsert, { session: dbSession });
     }
 
+    await dbSession.commitTransaction();
     return { success: true };
 
   } catch (error) {
+    await dbSession.abortTransaction();
     console.error('Error saving education:', error);
     return { success: false, message: error.message };
+  } finally {
+    dbSession.endSession();
   }
 }
 
@@ -247,22 +291,20 @@ export async function savePageSkills(uri, skillsData) {
       return { success: false, message: 'Unauthorized. Please log in.' };
     }
 
-    // Validate inputs
-
-    // Support both old format (array of strings) and new format (categorized object)
     if (!uri) {
       return { success: false, message: 'URI is required.' };
     }
 
-    // Validate the skills data structure
     if (skillsData === null || skillsData === undefined) {
       return { success: false, message: 'Invalid skills data format.' };
     }
 
-    // Find and update the page by owner email (more reliable than uri match)
+    // Sanitize skills data before persisting
+    const sanitizedSkills = sanitizeSkillsData(skillsData);
+
     const result = await Page.updateOne(
       { owner: session.user.email, uri: uri },
-      { $set: { skills: skillsData } }
+      { $set: { skills: sanitizedSkills } }
     );
 
     if (result.matchedCount === 0) {
@@ -277,7 +319,6 @@ export async function savePageSkills(uri, skillsData) {
   }
 }
 
-// This function is correct
 export async function savePageWorkExperience(uri, workData) {
   await connectToDatabase();
 
@@ -291,11 +332,14 @@ export async function savePageWorkExperience(uri, workData) {
     return { success: false, message: 'Invalid data provided.' };
   }
 
+  const dbSession = await mongoose.startSession();
   try {
+    dbSession.startTransaction();
+
     await WorkExperience.deleteMany({
       owner: userEmail,
       pageUri: uri,
-    });
+    }, { session: dbSession });
 
     const workDocsToInsert = workData.map(item => ({
       company: sanitizeString(item.company, 200),
@@ -308,18 +352,21 @@ export async function savePageWorkExperience(uri, workData) {
     }));
 
     if (workDocsToInsert.length > 0) {
-      await WorkExperience.insertMany(workDocsToInsert);
+      await WorkExperience.insertMany(workDocsToInsert, { session: dbSession });
     }
 
+    await dbSession.commitTransaction();
     return { success: true };
 
   } catch (error) {
+    await dbSession.abortTransaction();
     console.error('Error saving work experience:', error);
     return { success: false, message: error.message };
+  } finally {
+    dbSession.endSession();
   }
 }
 
-// This function is correct
 export async function savePageSummary(uri, summary) {
   await connectToDatabase();
 
@@ -333,9 +380,11 @@ export async function savePageSummary(uri, summary) {
   }
 
   try {
+    const sanitizedSummary = sanitizeString(summary, 5000);
+
     const result = await Page.updateOne(
       { owner: session.user.email, uri: uri },
-      { $set: { summary: summary } }
+      { $set: { summary: sanitizedSummary } }
     );
 
     if (result.matchedCount === 0) {
@@ -362,14 +411,15 @@ export async function savePageProject(uri, projectData) {
     return { success: false, message: 'Invalid data provided.' };
   }
 
+  const dbSession = await mongoose.startSession();
   try {
-    // 1. Delete all existing projects for this user and page
+    dbSession.startTransaction();
+
     await Project.deleteMany({
       owner: userEmail,
       pageUri: uri,
-    });
+    }, { session: dbSession });
 
-    // 2. Prepare new entries
     const projectDocsToInsert = projectData.map(item => ({
       title: sanitizeString(item.title, 200),
       techStacks: sanitizeString(item.techStacks, 500),
@@ -381,15 +431,18 @@ export async function savePageProject(uri, projectData) {
       pageUri: uri,
     }));
 
-    // 3. Insert all new entries
     if (projectDocsToInsert.length > 0) {
-      await Project.insertMany(projectDocsToInsert);
+      await Project.insertMany(projectDocsToInsert, { session: dbSession });
     }
 
+    await dbSession.commitTransaction();
     return { success: true };
 
   } catch (error) {
+    await dbSession.abortTransaction();
     console.error('Error saving projects:', error);
     return { success: false, message: error.message };
+  } finally {
+    dbSession.endSession();
   }
 }

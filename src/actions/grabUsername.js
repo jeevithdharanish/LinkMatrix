@@ -24,13 +24,9 @@ export default async function grabUsername({ username }) {
     return { success: false, message: 'You must be logged in.' };
   }
 
-  // Check if user already has a page
-  const existingUserPage = await Page.findOne({ owner: session.user.email });
-  if (existingUserPage) {
-    return { success: false, message: 'You already have a page.' };
-  }
-
   // Atomic upsert — race-safe username claim
+  // The unique index on `owner` (in the Page schema) enforces one-page-per-user
+  // at the DB level, so the separate findOne check is no longer needed.
   try {
     const existing = await Page.findOneAndUpdate(
       { uri: trimmed },
@@ -45,8 +41,17 @@ export default async function grabUsername({ username }) {
 
     return { success: true, uri: trimmed };
   } catch (error) {
-    // Handle duplicate key race (E11000)
-    if (error.code === 11000 || error.name === 'MongoServerError') {
+    // Only treat code 11000 (duplicate key) as a known conflict
+    if (error.code === 11000) {
+      // Determine which key caused the conflict
+      const keyPattern = error.keyPattern || {};
+      if (keyPattern.owner) {
+        return { success: false, message: 'You already have a page.' };
+      }
+      if (keyPattern.uri) {
+        return { success: false, message: 'Username is already taken.' };
+      }
+      // Fallback for duplicate key with unknown field
       return { success: false, message: 'Username is already taken.' };
     }
     console.error('Error claiming username:', error);

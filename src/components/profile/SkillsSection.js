@@ -72,11 +72,15 @@ export default function SkillsSection({ skills }) {
     return null;
   }
 
-  if (activeCategory === null && categories.length > 0) {
-    setActiveCategory(categories[0]);
-  }
+  // Derive effective category without calling setState during render
+  const effectiveCategory = (activeCategory !== null && categories.includes(activeCategory))
+    ? activeCategory
+    : categories[0];
 
-  const currentSkills = categorizedSkills[activeCategory] || [];
+  const currentSkills = categorizedSkills[effectiveCategory] || [];
+
+  // Get the config icon for the effective category (used in coursework chips)
+  const currentCategoryConfig = categoryConfig[effectiveCategory] || { icon: faBookOpen, color: "from-blue-500 to-purple-500", showProgress: true };
 
   return (
     <section className="group">
@@ -100,17 +104,18 @@ export default function SkillsSection({ skills }) {
       {/* Category Tabs */}
       <ScrollReveal animation="fade-up" delay={150}>
         <div className="flex flex-wrap justify-center gap-3 mb-10">
-          {categories.map((category, i) => {
+          {categories.map((category) => {
             const config = categoryConfig[category] || { icon: faCode, color: "from-blue-500 to-purple-500" };
-            const isActive = activeCategory === category;
+            const isActive = effectiveCategory === category;
 
             return (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
+                aria-pressed={isActive}
                 className={`px-6 py-3 rounded-full font-medium text-sm transition-all duration-300 ${isActive
-                    ? `bg-gradient-to-r ${config.color} text-white shadow-lg scale-105`
-                    : "bg-slate-800/50 text-slate-400 border border-slate-700/50 hover:border-slate-600 hover:text-white"
+                  ? `bg-gradient-to-r ${config.color} text-white shadow-lg scale-105`
+                  : "bg-slate-800/50 text-slate-400 border border-slate-700/50 hover:border-slate-600 hover:text-white"
                   }`}
               >
                 {category}
@@ -122,13 +127,12 @@ export default function SkillsSection({ skills }) {
 
       {/* Active Category Title */}
       <h3 className="text-xl font-bold text-white text-center mb-8">
-        {activeCategory}
+        {effectiveCategory}
       </h3>
 
       {/* Skills Grid */}
       {(() => {
-        const config = categoryConfig[activeCategory] || { showProgress: true };
-        const showProgress = config.showProgress !== false;
+        const showProgress = currentCategoryConfig.showProgress !== false;
 
         // For Related Coursework, show as tags/chips with pop-in
         if (!showProgress) {
@@ -143,7 +147,7 @@ export default function SkillsSection({ skills }) {
                       className="inline-flex items-center gap-2 px-5 py-3 bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 hover:border-pink-500/30 transition-all duration-300 hover:-translate-y-1 hover:bg-slate-800 pop-in-animated"
                       style={{ animationDelay: `${index * 60}ms` }}
                     >
-                      <FontAwesomeIcon icon={faBookOpen} className="w-4 h-4 text-pink-400" />
+                      <FontAwesomeIcon icon={currentCategoryConfig.icon} className="w-4 h-4 text-pink-400" />
                       <span className="text-white font-medium">{skillName}</span>
                     </span>
                   );

@@ -417,4 +417,13 @@ html {
     opacity: 1;
     animation: none;
   }
+
+  .gradient-shimmer {
+    animation: none;
+    background-position: 0 0;
+  }
+
+  .dot-pulse {
+    animation: none;
+  }
 }

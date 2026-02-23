@@ -39,6 +39,9 @@ export default function ScrollReveal({
                 if (entry.isIntersecting) {
                     el.classList.add('scroll-revealed');
                     if (once) observer.unobserve(el);
+                } else if (!once) {
+                    // Re-hide so animation replays on next scroll-in
+                    el.classList.remove('scroll-revealed');
                 }
             },
             { threshold, rootMargin: '0px 0px -40px 0px' }

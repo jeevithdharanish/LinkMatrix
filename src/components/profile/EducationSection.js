@@ -27,7 +27,7 @@ export default function EducationSection({ education }) {
       <div className="relative">
         {/* Timeline line — animated draw */}
         <div className="absolute left-6 top-0 bottom-0 w-0.5 hidden md:block overflow-hidden">
-          <div className="w-full bg-gradient-to-b from-amber-500 via-orange-500 to-amber-500/20 timeline-line-animated"></div>
+          <div className="w-full h-full bg-gradient-to-b from-amber-500 via-orange-500 to-amber-500/20 timeline-line-animated"></div>
         </div>
 
         <div className="space-y-8">

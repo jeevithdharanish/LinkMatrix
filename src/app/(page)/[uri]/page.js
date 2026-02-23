@@ -6,8 +6,46 @@ import { Project } from "@/models/Project";
 import { Event } from "@/models/Event";
 import { connectToDatabase } from "@/libs/mongoClient";
 import { unstable_cache } from "next/cache";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faDiscord, faFacebook, faGithub, faInstagram, faTelegram,
+  faTiktok, faWhatsapp, faYoutube, faLinkedin
+} from "@fortawesome/free-brands-svg-icons";
+import {
+  faEnvelope, faLink, faLocationDot, faMobile, faFileAlt, faCode,
+  faArrowUpRightFromSquare, faShareNodes, faDownload, faArrowDown,
+  faHeart, faCopyright, faChevronUp, faGlobe
+} from "@fortawesome/free-solid-svg-icons";
+import SummarySection from "@/components/profile/SummarySection";
+import SkillsSection from "@/components/profile/SkillsSection";
+import WorkExperienceSection from "@/components/profile/WorkExperienceSection";
+import EducationSection from "@/components/profile/EducationSection";
+import ProjectSection from "@/components/profile/ProjectSection";
+import ParticleNetwork from "@/components/animations/ParticleNetwork";
+import ScrollReveal from "@/components/animations/ScrollReveal";
 
-// Cache page data for 60 seconds to reduce DB calls
+// Unicode-safe base64 encoder producing URL-safe output
+function safeBase64Encode(str) {
+  try {
+    return btoa(unescape(encodeURIComponent(str)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  } catch {
+    return encodeURIComponent(str);
+  }
+}
+
+// Normalize a base URL to always end with a trailing slash
+function normalizeBaseUrl(url) {
+  if (!url) return '/';
+  return url.endsWith('/') ? url : url + '/';
+}
+
+// Cache page data for 60 seconds — key includes uri for per-page isolation
 const getCachedPageData = unstable_cache(
   async (uri) => {
     await connectToDatabase();
@@ -20,7 +58,8 @@ const getCachedPageData = unstable_cache(
 // Dynamic SEO metadata - uses cached page data
 export async function generateMetadata({ params }) {
   try {
-    const page = await getCachedPageData(params.uri);
+    const resolvedParams = await params;
+    const page = await getCachedPageData(resolvedParams.uri);
 
     if (!page) {
       return {
@@ -59,27 +98,6 @@ export async function generateMetadata({ params }) {
     };
   }
 }
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faDiscord, faFacebook, faGithub, faInstagram, faTelegram,
-  faTiktok, faWhatsapp, faYoutube, faLinkedin
-} from "@fortawesome/free-brands-svg-icons";
-import {
-  faEnvelope, faLink, faLocationDot, faMobile, faFileAlt, faCode,
-  faArrowUpRightFromSquare, faShareNodes, faDownload, faArrowDown,
-  faHeart, faCopyright, faChevronUp
-} from "@fortawesome/free-solid-svg-icons";
-import { btoa } from "next/dist/compiled/@edge-runtime/primitives";
-import SummarySection from "@/components/profile/SummarySection";
-import SkillsSection from "@/components/profile/SkillsSection";
-import WorkExperienceSection from "@/components/profile/WorkExperienceSection";
-import EducationSection from "@/components/profile/EducationSection";
-import ProjectSection from "@/components/profile/ProjectSection";
-import ParticleNetwork from "@/components/animations/ParticleNetwork";
-import ScrollReveal from "@/components/animations/ScrollReveal";
 
 export const buttonsIcons = {
   email: faEnvelope,
@@ -96,6 +114,9 @@ export const buttonsIcons = {
   whatsapp: faWhatsapp,
   telegram: faTelegram,
 };
+
+// Fallback icon when a button key is not in buttonsIcons
+const fallbackIcon = faGlobe;
 
 // Social button colors with solid backgrounds
 const buttonStyles = {
@@ -121,8 +142,9 @@ function buttonLink(key, value) {
 }
 
 export default async function UserPage({ params }) {
-  const uri = params.uri;
-  const baseUrl = process.env.URL || "";
+  const resolvedParams = await params;
+  const uri = resolvedParams.uri;
+  const baseUrl = normalizeBaseUrl(process.env.URL || "");
 
   try {
     await connectToDatabase();
@@ -150,22 +172,23 @@ export default async function UserPage({ params }) {
     // Track page view - non-blocking (don't await)
     Event.create({ uri: uri, page: uri, type: 'view' }).catch(() => { });
 
+    // Build a shallow copy with sorted buttons — never mutate cached pageData
     const sortedButtons = Object.keys(pageData.buttons || {})
       .sort()
       .reduce((obj, key) => {
         obj[key] = pageData.buttons[key];
         return obj;
       }, {});
-    pageData.buttons = sortedButtons;
+    const page = { ...pageData, buttons: sortedButtons };
 
     const backgroundStyle =
-      pageData.bgType === "color"
-        ? { backgroundColor: pageData.bgColor }
-        : { backgroundImage: `url(${pageData.bgImage})` };
+      page.bgType === "color"
+        ? { backgroundColor: page.bgColor }
+        : { backgroundImage: `url(${page.bgImage})` };
 
     // Get resume link if available (supports both URL and public folder path)
-    const resumeLink = pageData.buttons?.resume || '/RESUME.pdf';
-    const hasResume = pageData.buttons?.resume || false; // Only show if explicitly set
+    const resumeLink = page.buttons?.resume || '/RESUME.pdf';
+    const hasResume = page.buttons?.resume || false; // Only show if explicitly set
 
     return (
       <div className="bg-slate-950 text-white min-h-screen overflow-x-hidden">
@@ -183,8 +206,8 @@ export default async function UserPage({ params }) {
             <div className="absolute inset-0">
               <Image
                 className="w-full h-full object-cover object-center"
-                src={pageData.profileImage || '/profile.jpg'}
-                alt={`${pageData.displayName}'s photo`}
+                src={page.profileImage || '/profile.jpg'}
+                alt={`${page.displayName}'s photo`}
                 fill
                 priority
                 sizes="50vw"
@@ -221,8 +244,8 @@ export default async function UserPage({ params }) {
                   <div className="relative w-40 h-40 rounded-full border-4 border-slate-950 overflow-hidden">
                     <Image
                       className="w-full h-full object-cover"
-                      src={pageData.profileImage || '/profile.jpg'}
-                      alt={`${pageData.displayName}'s avatar`}
+                      src={page.profileImage || '/profile.jpg'}
+                      alt={`${page.displayName}'s avatar`}
                       width={160}
                       height={160}
                       priority
@@ -243,22 +266,22 @@ export default async function UserPage({ params }) {
               <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight">
                 <span className="text-slate-400 text-2xl md:text-3xl font-normal block mb-2">Hello, I&apos;m</span>
                 <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
-                  {pageData.displayName}
+                  {page.displayName}
                 </span>
               </h1>
 
               {/* Bio/Title */}
-              {pageData.bio && (
+              {page.bio && (
                 <p className="text-lg md:text-xl lg:text-2xl text-slate-400 mb-8 leading-relaxed max-w-xl">
-                  {pageData.bio}
+                  {page.bio}
                 </p>
               )}
 
               {/* Location */}
-              {pageData.location && (
+              {page.location && (
                 <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full text-slate-300 mb-10">
                   <FontAwesomeIcon icon={faLocationDot} className="w-4 h-4 text-blue-400" />
-                  <span className="text-sm font-medium">{pageData.location}</span>
+                  <span className="text-sm font-medium">{page.location}</span>
                 </div>
               )}
 
@@ -279,14 +302,15 @@ export default async function UserPage({ params }) {
               </div>
 
               {/* Social Links */}
-              {Object.keys(pageData.buttons || {}).length > 0 && (
+              {Object.keys(page.buttons || {}).length > 0 && (
                 <div>
                   <p className="text-slate-500 text-sm uppercase tracking-wider mb-4 font-medium">Connect with me</p>
                   <div className="flex flex-wrap gap-3">
-                    {Object.keys(pageData.buttons).map((buttonKey) => {
-                      const url = buttonLink(buttonKey, pageData.buttons[buttonKey]);
-                      const pingUrl = `${baseUrl}api/click?url=${btoa(url)}&page=${pageData.uri}&clickType=social`;
+                    {Object.keys(page.buttons).map((buttonKey) => {
+                      const url = buttonLink(buttonKey, page.buttons[buttonKey]);
+                      const pingUrl = `${baseUrl}api/click?url=${safeBase64Encode(url)}&page=${page.uri}&clickType=social`;
                       const style = buttonStyles[buttonKey] || { bg: "bg-blue-500", hover: "hover:bg-blue-600" };
+                      const icon = buttonsIcons[buttonKey] || fallbackIcon;
 
                       return (
                         <Link
@@ -300,7 +324,7 @@ export default async function UserPage({ params }) {
                         >
                           <FontAwesomeIcon
                             className="w-5 h-5"
-                            icon={buttonsIcons[buttonKey]}
+                            icon={icon}
                           />
                           <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-white text-slate-900 text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap capitalize shadow-lg">
                             {buttonKey}
@@ -327,10 +351,10 @@ export default async function UserPage({ params }) {
         <main className="relative">
 
           {/* About Section */}
-          {pageData.summary && (
+          {page.summary && (
             <section id="about" className="py-24 bg-slate-900/50">
               <div className="max-w-6xl mx-auto px-6 lg:px-8">
-                <SummarySection summary={pageData.summary} />
+                <SummarySection summary={page.summary} />
               </div>
             </section>
           )}
@@ -345,7 +369,7 @@ export default async function UserPage({ params }) {
           )}
 
           {/* Featured Links Section - Moved up */}
-          {(pageData.links || []).length > 0 && (
+          {(page.links || []).length > 0 && (
             <section id="links" className="py-24 bg-slate-900/50">
               <div className="max-w-4xl mx-auto px-6 lg:px-8">
                 <ScrollReveal animation="fade-up">
@@ -362,7 +386,7 @@ export default async function UserPage({ params }) {
                 </ScrollReveal>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  {(pageData.links || []).map((link, index) => (
+                  {(page.links || []).map((link, index) => (
                     <ScrollReveal
                       key={`${link.url}-${index}`}
                       animation="fade-up"
@@ -372,7 +396,7 @@ export default async function UserPage({ params }) {
                       <Link
                         target="_blank"
                         rel="noopener noreferrer"
-                        ping={`${baseUrl}api/click?url=${btoa(link.url)}&page=${pageData.uri}&clickType=link`}
+                        ping={`${baseUrl}api/click?url=${safeBase64Encode(link.url)}&page=${page.uri}&clickType=link`}
                         className="group flex items-center gap-4 p-5 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl hover:bg-slate-800 hover:border-cyan-500/50 transition-all duration-300 hover:-translate-y-1"
                         href={link.url}
                       >
@@ -415,10 +439,10 @@ export default async function UserPage({ params }) {
           )}
 
           {/* Skills Section */}
-          {pageData.skills && Object.keys(pageData.skills).length > 0 && (
+          {page.skills && Object.keys(page.skills).length > 0 && (
             <section id="skills" className="py-24 bg-slate-950">
               <div className="max-w-6xl mx-auto px-6 lg:px-8">
-                <SkillsSection skills={pageData.skills} />
+                <SkillsSection skills={page.skills} />
               </div>
             </section>
           )}
@@ -430,7 +454,7 @@ export default async function UserPage({ params }) {
                 <ProjectSection
                   projects={serializedProjects}
                   baseUrl={baseUrl}
-                  pageUri={pageData.uri}
+                  pageUri={page.uri}
                 />
               </div>
             </section>
@@ -459,29 +483,31 @@ export default async function UserPage({ params }) {
 
               <ScrollReveal animation="scale-up" delay={200}>
                 <div className="flex flex-wrap gap-4 justify-center">
-                  {pageData.buttons?.email && (
+                  {page.buttons?.email && (
                     <Link
-                      href={`mailto:${pageData.buttons.email}`}
+                      href={`mailto:${page.buttons.email}`}
                       className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105"
                     >
                       <FontAwesomeIcon icon={faEnvelope} className="w-5 h-5" />
                       Send Email
                     </Link>
                   )}
-                  {pageData.buttons?.linkedin && (
+                  {page.buttons?.linkedin && (
                     <Link
-                      href={pageData.buttons.linkedin}
+                      href={page.buttons.linkedin}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-3 px-8 py-4 bg-blue-700 text-white rounded-full font-semibold text-lg hover:bg-blue-800 transition-all duration-300 shadow-lg hover:scale-105"
                     >
                       <FontAwesomeIcon icon={faLinkedin} className="w-5 h-5" />
                       LinkedIn
                     </Link>
                   )}
-                  {pageData.buttons?.github && (
+                  {page.buttons?.github && (
                     <Link
-                      href={pageData.buttons.github}
+                      href={page.buttons.github}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-3 px-8 py-4 bg-slate-800 border border-slate-700 text-white rounded-full font-semibold text-lg hover:bg-slate-700 transition-all duration-300 hover:scale-105"
                     >
                       <FontAwesomeIcon icon={faGithub} className="w-5 h-5" />

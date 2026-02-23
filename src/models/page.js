@@ -32,7 +32,7 @@ const SkillsCategorySchema = new Schema({
 }, { _id: false, strict: false }); // strict: false allows additional categories
 
 const PageSchema = new Schema({
-  uri: { type: String, required: true, min: 1, unique: true },
+  uri: { type: String, required: true, minlength: 1, unique: true },
   owner: { type: String, required: true },
   displayName: { type: String, default: "" },
   location: { type: String, default: "" },
@@ -42,12 +42,12 @@ const PageSchema = new Schema({
   bgImage: { type: String, default: "" },
   profileImage: { type: String, default: "" },
   buttons: { type: Object, default: {} },
-  links: { type: Object, default: [] },
+  links: { type: [Object], default: [] },
   // Categorized skills with proficiency
   // Format: { "Category Name": [{ name: "Skill", proficiency: 80 }, ...] }
-  skills: { 
-    type: Schema.Types.Mixed, 
-    default: {} 
+  skills: {
+    type: Schema.Types.Mixed,
+    default: {}
   },
   summary: { type: String, default: "" }
 
