@@ -6,28 +6,32 @@ export default function LoginPage({ searchParams }) {
   const desiredUsername = searchParams?.username;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl" />
+
+      <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl p-8 w-full max-w-md border border-white/10">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white text-2xl font-bold">🔗</span>
+          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg">
+            <span className="text-white text-xl">🔗</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl font-bold text-white mb-2">
             Welcome to LinkMate
           </h1>
           {desiredUsername ? (
-            <div className="mb-4">
-              <p className="text-gray-600 mb-2">
+            <div className="mb-4 mt-4">
+              <p className="text-slate-300 text-sm mb-3">
                 You&apos;re claiming the username:
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <span className="text-blue-800 font-mono font-semibold">
+              <div className="bg-white/10 border border-white/10 rounded-xl p-3">
+                <span className="text-indigo-300 font-mono font-semibold text-sm">
                   linkto/{desiredUsername}
                 </span>
               </div>
             </div>
           ) : (
-            <p className="text-gray-600">
+            <p className="text-slate-400 text-sm">
               Sign in to create your link page
             </p>
           )}
@@ -35,6 +39,9 @@ export default function LoginPage({ searchParams }) {
         <div className="space-y-4">
           <LoginWithGoogle />
         </div>
+        <p className="text-center text-xs text-slate-500 mt-6">
+          By signing in, you agree to our Terms of Service
+        </p>
       </div>
     </div>
   );

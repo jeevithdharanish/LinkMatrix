@@ -1,13 +1,13 @@
 
 'use client';
-import {faRightFromBracket} from "@fortawesome/free-solid-svg-icons";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {signOut} from "next-auth/react";
+import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { signOut } from "next-auth/react";
 
 export default function LogoutButton({
-  className="flex items-center gap-2 border p-2 px-4 shadow transition-transform duration-200 hover:shadow-lg hover:scale-105" ,
+  className = "flex items-center gap-2 text-sm text-gray-500 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all duration-200 font-medium",
   iconLeft = false,
-  iconClasses = '',
+  iconClasses = 'text-xs',
 }) {
   return (
     <button

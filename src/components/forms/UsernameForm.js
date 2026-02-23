@@ -8,13 +8,13 @@ import { useState } from "react";
 export default function UsernameForm({ desiredUsername = '' }) {
   const [taken, setTaken] = useState(false);
   const router = useRouter();
-  console.log(desiredUsername)
+
   async function handleSubmit(event) {
     event.preventDefault();
     const formData = new FormData(event.target);
-    const username =formData.get('username');
+    const username = formData.get('username');
 
-    const result = await grabUsername({username});
+    const result = await grabUsername({ username });
     setTaken(result === false);
 
     if (result) {
@@ -40,7 +40,7 @@ export default function UsernameForm({ desiredUsername = '' }) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-             
+
             </div>
             <input
               name="username"

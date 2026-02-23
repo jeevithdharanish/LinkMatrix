@@ -1,8 +1,8 @@
 import SessionWrapper from "@/components/SessionWrapper";
-import { Lato } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import './globals.css'
 
-const lato = Lato({ subsets: ['latin'], weight: ['400', '700'] })
+const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700'] })
 
 export const metadata = {
   title: 'LinkMate - Your one link for everything',
@@ -12,7 +12,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={lato.className}>
+      <body className={`${inter.className} antialiased`}>
         <SessionWrapper>
           <main className="w-full">
             {children}
@@ -22,9 +22,3 @@ export default function RootLayout({ children }) {
     </html>
   )
 }
-
-
-
-
-
-

@@ -1,8 +1,8 @@
 'use client';
 
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
-export default function HeroForm({user}) {
+export default function HeroForm({ user }) {
   const router = useRouter();
 
   async function handleSubmit(ev) {
@@ -12,7 +12,7 @@ export default function HeroForm({user}) {
     const username = input.value;
     if (username.length > 0) {
       if (user) {
-        router.push('/account?desiredUsername='+username);
+        router.push('/account?desiredUsername=' + username);
       } else {
         window.localStorage.setItem('desiredUsername', username);
         router.push(`/login?username=${encodeURIComponent(username)}`);
@@ -23,43 +23,46 @@ export default function HeroForm({user}) {
   return (
     <div>
       <form
-  onSubmit={handleSubmit}
-  className="inline-flex items-center shadow-lg bg-white shadow-gray-500/20 rounded-lg overflow-hidden"
->
-  <span className="bg-white py-4 pl-4">linkto/</span>
-  <input
-    type="text"
-    className="outline-none flex-1"
-    style={{ backgroundColor: 'white', marginBottom: 0, paddingLeft: 0 }}
-    placeholder="username"
-  />
-  <button
-    type="submit"
-    className="bg-blue-500 text-white py-4 px-6 whitespace-nowrap hover:bg-blue-600 transition-colors"
-  >
-    Join
-  </button>
-</form>
+        onSubmit={handleSubmit}
+        className="inline-flex items-center bg-white border border-gray-200 shadow-elevated rounded-2xl overflow-hidden max-w-md mx-auto w-full"
+      >
+        <span className="bg-white py-4 pl-5 text-gray-400 font-medium text-sm">linkto/</span>
+        <input
+          type="text"
+          className="outline-none flex-1 text-gray-900 font-medium"
+          style={{ backgroundColor: 'white', marginBottom: 0, paddingLeft: 0, border: 'none', boxShadow: 'none' }}
+          placeholder="username"
+        />
+        <button
+          type="submit"
+          className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-4 px-6 whitespace-nowrap hover:shadow-lg transition-all duration-200 font-medium text-sm"
+        >
+          Claim
+        </button>
+      </form>
 
-    <div className="mt-8 text-gray-600 max-w-lg mx-auto">
-  <p className="text-center">
-    Create a single, beautiful link to showcase your work, content, and social profiles.
-  </p>
-  <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-center mt-6">
-    <div className="flex flex-col items-center">
-      <span className="text-2xl">🎨</span>
-      <p className="font-semibold mt-1">Customize fully</p>
-    </div>
-    <div className="flex flex-col items-center">
-      <span className="text-2xl">🔗</span>
-      <p className="font-semibold mt-1">Add unlimited links</p>
-    </div>
-    <div className="flex flex-col items-center col-span-2 sm:col-span-1">
-      <span className="text-2xl">📈</span>
-      <p className="font-semibold mt-1">Track analytics</p>
-    </div>
-  </div>
-</div>
+      <div className="mt-10 max-w-lg mx-auto">
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="flex flex-col items-center p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-gray-100 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-2">
+              <span className="text-xl">🎨</span>
+            </div>
+            <p className="font-semibold text-gray-800 text-sm">Customize fully</p>
+          </div>
+          <div className="flex flex-col items-center p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-gray-100 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+            <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center mb-2">
+              <span className="text-xl">🔗</span>
+            </div>
+            <p className="font-semibold text-gray-800 text-sm">Unlimited links</p>
+          </div>
+          <div className="flex flex-col items-center p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-gray-100 hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200">
+            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-2">
+              <span className="text-xl">📈</span>
+            </div>
+            <p className="font-semibold text-gray-800 text-sm">Track analytics</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

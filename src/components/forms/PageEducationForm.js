@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from "react";
-import { savePageEducation } from "@/actions/pageActions"; // Make sure path is correct
+import { savePageEducation } from "@/actions/pageActions";
 import { toast } from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faSave, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -9,23 +9,21 @@ import SectionBox from "@/components/layout/SectionBox";
 import SubmitButton from "../buttons/SubmitButton";
 
 export default function PageEducationForm({ page, initialEducation }) {
-  // Use the passed-in initialEducation to set the state
   const [education, setEducation] = useState(initialEducation || []);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   async function save(ev) {
     ev.preventDefault();
     setIsSaving(true);
-    
-    // The server action now handles saving this array to the separate collection
+
     const result = await savePageEducation(page.uri, education);
-    
+
     if (result.success) {
       toast.success('Saved!');
     } else {
       toast.error(`Error: ${result.message || 'Could not save.'}`);
     }
-    
+
     setIsSaving(false);
   }
 
@@ -51,84 +49,88 @@ export default function PageEducationForm({ page, initialEducation }) {
   return (
     <SectionBox>
       <form onSubmit={save}>
-        <h2 className="text-2xl font-bold mb-4 text-center">Education</h2>
-        
+        <h2 className="text-xl font-semibold mb-5 text-gray-900">Education</h2>
+
         {/* Add New Button - At Top */}
         <button
           onClick={addNewEducation}
           type="button"
-          className="text-blue-500 text-lg flex gap-2 items-center cursor-pointer mb-4 hover:text-blue-700 transition duration-200"
+          className="text-indigo-600 text-sm flex gap-2 items-center cursor-pointer mb-4 hover:text-indigo-700 transition duration-200 font-medium"
         >
-          <FontAwesomeIcon className="bg-blue-500 text-white p-1 rounded-full aspect-square" icon={faPlus} />
+          <div className="w-6 h-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-full flex items-center justify-center">
+            <FontAwesomeIcon icon={faPlus} className="text-xs" />
+          </div>
           <span>Add new education</span>
         </button>
-        
+
         {/* Education Items List */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {education.length === 0 && (
-            <div className="text-sm text-gray-400">No education added yet.</div>
+            <div className="text-sm text-gray-400 text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              No education added yet.
+            </div>
           )}
 
           {education.map((edu, idx) => (
-            <div key={idx} className="p-4 bg-white/10 rounded-lg">
+            <div key={idx} className="p-4 bg-gray-50/50 rounded-xl border border-gray-200 hover:border-indigo-200 transition-all duration-200">
               <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-600 mb-1">School / University</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">School / University</label>
                 <input
                   value={edu.school}
                   onChange={(e) => updateEdu(idx, "school", e.target.value)}
                   placeholder="e.g., MIT, Stanford University"
-                  className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
               </div>
 
               <div className="mb-3">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Degree / Major</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Degree / Major</label>
                 <input
                   value={edu.degree}
                   onChange={(e) => updateEdu(idx, "degree", e.target.value)}
                   placeholder="e.g., B.Tech in Computer Science"
-                  className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Start Year</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Start Year</label>
                   <input
                     value={edu.start}
                     onChange={(e) => updateEdu(idx, "start", e.target.value)}
                     placeholder="e.g., 2020"
-                    className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">End Year</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">End Year</label>
                   <input
                     value={edu.end}
                     onChange={(e) => updateEdu(idx, "end", e.target.value)}
                     placeholder="e.g., 2024 or Present"
-                    className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">CGPA / GPA</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">CGPA / GPA</label>
                   <input
                     value={edu.cgpa || ''}
                     onChange={(e) => updateEdu(idx, "cgpa", e.target.value)}
-                    placeholder="e.g., 8.5/10 or 3.8/4.0"
-                    className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    placeholder="e.g., 8.5/10"
+                    className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
               </div>
 
               <div className="mb-2">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Description / Achievements</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Description / Achievements</label>
                 <textarea
                   value={edu.description}
                   onChange={(e) => updateEdu(idx, "description", e.target.value)}
                   placeholder="Relevant coursework, achievements, honors, activities..."
-                  rows={4}
-                  className="w-full rounded shadow px-3 py-2 bg-white/5 border border-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  rows={3}
+                  className="w-full rounded-xl px-3 py-2.5 bg-white border border-gray-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
                 />
               </div>
 
@@ -136,9 +138,9 @@ export default function PageEducationForm({ page, initialEducation }) {
                 <button
                   onClick={() => removeEdu(idx)}
                   type="button"
-                  className="bg-red-500 text-white py-1 px-3 rounded text-sm hover:bg-red-600 transition duration-200"
+                  className="bg-red-50 text-red-500 py-1.5 px-3 rounded-xl text-xs font-medium hover:bg-red-100 transition duration-200"
                 >
-                  <FontAwesomeIcon icon={faTrash} /> Remove
+                  <FontAwesomeIcon icon={faTrash} className="mr-1" /> Remove
                 </button>
               </div>
             </div>
@@ -146,12 +148,12 @@ export default function PageEducationForm({ page, initialEducation }) {
         </div>
 
         {/* Save Button */}
-        <div className="border-t pt-4 mt-4">
-          <SubmitButton 
-            disabled={isSaving} 
-            className="max-w-xs mx-auto bg-blue-500 hover:bg-blue-600 transition duration-200">
+        <div className="border-t border-gray-100 pt-4 mt-4">
+          <SubmitButton
+            disabled={isSaving}
+            className="max-w-xs mx-auto">
             <FontAwesomeIcon icon={faSave} />
-            <span className="ml-2">{isSaving ? "Saving..." : "Save"}</span>
+            <span className="ml-1">{isSaving ? "Saving..." : "Save"}</span>
           </SubmitButton>
         </div>
       </form>

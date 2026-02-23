@@ -25,7 +25,7 @@ export default function PageLinksForm({ page, user }) {
       subtitle: '',
       icon: '',
       url: '',
-    }, ...prev]); // New link is added to the front
+    }, ...prev]);
   }
 
   function handleUpload(ev, linkKeyForUpload) {
@@ -63,12 +63,14 @@ export default function PageLinksForm({ page, user }) {
   return (
     <SectionBox>
       <form action={save}>
-        <h2 className="text-2xl font-bold mb-4 text-center">Links</h2>
+        <h2 className="text-xl font-semibold mb-5 text-gray-900">Links</h2>
         <button
           onClick={addNewLink}
           type="button"
-          className="text-blue-500 text-lg flex gap-2 items-center cursor-pointer mb-4 hover:text-blue-700 transition duration-200">
-          <FontAwesomeIcon className="bg-blue-500 text-white p-1 rounded-full aspect-square" icon={faPlus} />
+          className="text-indigo-600 text-sm flex gap-2 items-center cursor-pointer mb-4 hover:text-indigo-700 transition duration-200 font-medium">
+          <div className="w-6 h-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-full flex items-center justify-center">
+            <FontAwesomeIcon icon={faPlus} className="text-xs" />
+          </div>
           <span>Add new</span>
         </button>
         <div>
@@ -76,14 +78,14 @@ export default function PageLinksForm({ page, user }) {
             handle={'.handle'}
             list={links} setList={setLinks}>
             {links.map(l => (
-              <div key={l.key} className="mt-4 md:flex gap-6 items-center p-4 border border-gray-300 rounded-md shadow-sm hover:shadow-lg transition duration-200">
-                <div className="handle">
+              <div key={l.key} className="mt-3 md:flex gap-5 items-center p-4 border border-gray-200 rounded-xl hover:border-indigo-200 transition-all duration-200 bg-gray-50/50">
+                <div className="handle cursor-grab">
                   <FontAwesomeIcon
-                    className="text-gray-500 mr-2 cursor-ns-resize"
+                    className="text-gray-300 mr-2 hover:text-gray-500 transition-colors"
                     icon={faGripLines} />
                 </div>
                 <div className="text-center">
-                  <div className="bg-gray-300 relative aspect-square overflow-hidden w-16 h-16 flex justify-center items-center rounded-full border-2 border-gray-400">
+                  <div className="bg-gray-100 relative aspect-square overflow-hidden w-14 h-14 flex justify-center items-center rounded-xl border border-gray-200">
                     {l.icon && (
                       <Image
                         className="w-full h-full object-cover"
@@ -92,50 +94,56 @@ export default function PageLinksForm({ page, user }) {
                         width={64} height={64} />
                     )}
                     {!l.icon && (
-                      <FontAwesomeIcon size="xl" icon={faLink} />
+                      <FontAwesomeIcon size="lg" icon={faLink} className="text-gray-400" />
                     )}
                   </div>
-                  <div>
+                  <div className="mt-2 space-y-1.5">
                     <input
                       onChange={ev => handleUpload(ev, l.key)}
                       id={'icon' + l.key}
                       type="file"
                       className="hidden" />
-                    <label htmlFor={'icon' + l.key} className="border mt-2 p-2 flex items-center gap-1 text-gray-600 cursor-pointer mb-2 justify-center rounded hover:bg-gray-200 transition duration-150">
-                      <FontAwesomeIcon icon={faCloudArrowUp} />
-                      <span>Change icon</span>
+                    <label htmlFor={'icon' + l.key} className="border border-gray-200 p-1.5 flex items-center gap-1 text-gray-500 cursor-pointer rounded-lg hover:bg-gray-100 hover:border-gray-300 transition duration-150 text-xs justify-center">
+                      <FontAwesomeIcon icon={faCloudArrowUp} className="text-indigo-500" />
+                      <span>Icon</span>
                     </label>
                     <button
                       onClick={() => removeLink(l.key)}
-                      type="button" className="w-full bg-red-500 text-white py-2 px-3 mb-2 h-full flex gap-2 items-center justify-center rounded hover:bg-red-600 transition duration-200">
-                      <FontAwesomeIcon icon={faTrash} />
-                      <span>Remove this link</span>
+                      type="button" className="w-full bg-red-50 text-red-500 py-1.5 px-2 flex gap-1 items-center justify-center rounded-lg hover:bg-red-100 transition duration-200 text-xs">
+                      <FontAwesomeIcon icon={faTrash} className="text-xs" />
+                      <span>Remove</span>
                     </button>
                   </div>
                 </div>
-                <div className="grow">
-                  <label className="input-label">Title:</label>
-                  <input
-                    value={l.title}
-                    onChange={ev => handleLinkChange(l.key, 'title', ev)}
-                    type="text" placeholder="Title" className="border rounded-md p-2 w-full" />
-                  <label className="input-label">Subtitle:</label>
-                  <input
-                    value={l.subtitle}
-                    onChange={ev => handleLinkChange(l.key, 'subtitle', ev)}
-                    type="text" placeholder="Subtitle (optional)" className="border rounded-md p-2 w-full" />
-                  <label className="input-label">URL:</label>
-                  <input
-                    value={l.url}
-                    onChange={ev => handleLinkChange(l.key, 'url', ev)}
-                    type="text" placeholder="URL" className="border rounded-md p-2 w-full" />
+                <div className="grow space-y-2 mt-3 md:mt-0">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Title</label>
+                    <input
+                      value={l.title}
+                      onChange={ev => handleLinkChange(l.key, 'title', ev)}
+                      type="text" placeholder="Title" className="border border-gray-200 rounded-xl p-2.5 w-full text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Subtitle</label>
+                    <input
+                      value={l.subtitle}
+                      onChange={ev => handleLinkChange(l.key, 'subtitle', ev)}
+                      type="text" placeholder="Subtitle (optional)" className="border border-gray-200 rounded-xl p-2.5 w-full text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">URL</label>
+                    <input
+                      value={l.url}
+                      onChange={ev => handleLinkChange(l.key, 'url', ev)}
+                      type="text" placeholder="https://..." className="border border-gray-200 rounded-xl p-2.5 w-full text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all" />
+                  </div>
                 </div>
               </div>
             ))}
           </ReactSortable>
         </div>
-        <div className="border-t pt-4 mt-4">
-          <SubmitButton className="max-w-xs mx-auto bg-blue-500 hover:bg-blue-600 transition duration-200">
+        <div className="border-t border-gray-100 pt-4 mt-4">
+          <SubmitButton className="max-w-xs mx-auto">
             <FontAwesomeIcon icon={faSave} />
             <span>Save</span>
           </SubmitButton>

@@ -33,13 +33,12 @@ function upperFirst(str) {
 }
 
 export default function PageButtonsForm({ user, page }) {
-  
-  // Safely handle undefined or null `page.buttons`
+
   const pageButtons = page.buttons || {};
   const pageSavedButtonsKeys = Object.keys(pageButtons);
   const pageSavedButtonsInfo = pageSavedButtonsKeys
     .map(k => allButtons.find(b => b.key === k))
-    .filter(Boolean); // Filter out any undefined results
+    .filter(Boolean);
 
   const [activeButtons, setActiveButtons] = useState(pageSavedButtonsInfo);
 
@@ -65,58 +64,60 @@ export default function PageButtonsForm({ user, page }) {
   return (
     <SectionBox>
       <form action={saveButtons}>
-        <h2 className="text-2xl font-bold mb-4 text-center">Buttons</h2>
+        <h2 className="text-xl font-semibold mb-5 text-gray-900">Social Buttons</h2>
         <ReactSortable
           handle=".handle"
           list={activeButtons}
           setList={setActiveButtons}>
           {activeButtons.map(b => {
-            const buttonValue = b.key in pageButtons ? pageButtons[b.key] : ''; // Safely access the value
+            const buttonValue = b.key in pageButtons ? pageButtons[b.key] : '';
 
             return (
-              <div key={b.key} className="mb-4 md:flex items-center p-4 border border-gray-300 rounded-md shadow-sm hover:shadow-lg transition duration-200">
-                <div className="w-56 flex h-full text-gray-700 p-2 gap-2 items-center">
+              <div key={b.key} className="mb-3 md:flex items-center p-4 border border-gray-200 rounded-xl hover:border-indigo-200 transition-all duration-200 bg-gray-50/50">
+                <div className="w-48 flex h-full text-gray-700 p-1 gap-2.5 items-center">
                   <FontAwesomeIcon
                     icon={faGripLines}
-                    className="cursor-pointer text-gray-400 handle p-2" />
-                  <FontAwesomeIcon icon={b.icon} className="text-xl" />
-                  <span>{upperFirst(b.label)}:</span>
+                    className="cursor-grab text-gray-300 handle p-2 hover:text-gray-500 transition-colors" />
+                  <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <FontAwesomeIcon icon={b.icon} className="text-indigo-500 text-sm" />
+                  </div>
+                  <span className="font-medium text-sm">{upperFirst(b.label)}</span>
                 </div>
-                <div className="grow flex">
+                <div className="grow flex gap-2 mt-2 md:mt-0">
                   <input
                     key={b.key}
                     placeholder={b.placeholder}
                     name={b.key}
-                    defaultValue={buttonValue} // Use the new buttonValue variable
+                    defaultValue={buttonValue}
                     type="text"
-                    className="border rounded-md p-2 w-full" 
+                    className="border border-gray-200 rounded-xl p-2.5 w-full text-sm bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                   <button
                     onClick={() => removeButton(b)}
                     type="button"
-                    className="py-2 px-4 bg-red-500 text-white rounded-md ml-2 hover:bg-red-600 transition duration-200">
-                    <FontAwesomeIcon icon={faTrash} />
+                    className="py-2 px-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-all duration-200 flex-shrink-0">
+                    <FontAwesomeIcon icon={faTrash} className="text-sm" />
                   </button>
                 </div>
               </div>
             );
           })}
         </ReactSortable>
-        <div className="flex flex-wrap gap-2 mt-4 border-y py-4">
+        <div className="flex flex-wrap gap-2 mt-4 border-t border-gray-100 pt-4">
           {availableButtons.map(b => (
             <button
               key={b.key}
               type="button"
               onClick={() => addButtonToProfile(b)}
-              className="flex items-center gap-1 p-2 bg-gray-200 rounded-md hover:bg-gray-300 transition duration-150">
-              <FontAwesomeIcon icon={b.icon} />
+              className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-600 hover:border-indigo-200 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all duration-200">
+              <FontAwesomeIcon icon={b.icon} className="text-xs" />
               <span>{upperFirst(b.label)}</span>
-              <FontAwesomeIcon icon={faPlus} />
+              <FontAwesomeIcon icon={faPlus} className="text-xs text-gray-400" />
             </button>
           ))}
         </div>
-        <div className="max-w-xs mx-auto mt-8">
-          <SubmitButton className="bg-blue-500 hover:bg-blue-600 transition duration-200">
+        <div className="max-w-xs mx-auto mt-6">
+          <SubmitButton>
             <FontAwesomeIcon icon={faSave} />
             <span>Save</span>
           </SubmitButton>

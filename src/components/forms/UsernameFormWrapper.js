@@ -21,7 +21,7 @@ export default function UsernameFormWrapper({ initialDesiredUsername = '', showE
         router.replace(`/claim-username?desiredUsername=${encodeURIComponent(storedUsername)}`);
       }
     }
-  }, [desiredUsername,router]); // Run only once when component mounts
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally run only on mount
 
   return <UsernameForm desiredUsername={desiredUsername} />;
 }

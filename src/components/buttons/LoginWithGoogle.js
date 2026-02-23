@@ -1,8 +1,8 @@
 
 'use client';
-import {faGoogle} from "@fortawesome/free-brands-svg-icons";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {signIn} from "next-auth/react";
+import { faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { signIn } from "next-auth/react";
 
 export default function LoginWithGoogle() {
   const handleGoogleSignIn = async () => {
@@ -22,7 +22,7 @@ export default function LoginWithGoogle() {
   return (
     <button
       onClick={handleGoogleSignIn}
-      className="w-full bg-white border-2 border-gray-200 hover:border-gray-300 text-gray-700 font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-md hover:bg-gray-50">
+      className="w-full bg-white border border-gray-200 text-gray-700 font-semibold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-300 active:translate-y-0">
       <FontAwesomeIcon icon={faGoogle} className="h-5 w-5 text-red-500" />
       <span>Continue with Google</span>
     </button>

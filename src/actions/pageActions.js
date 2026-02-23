@@ -1,11 +1,11 @@
 'use server';
-import {authOptions} from "@/app/api/auth/[...nextauth]/route";
-import {Page} from "@/models/page";
-import {DeletedLink} from "@/models/DeletedLink";
-import {Event} from "@/models/Event";
-import {User} from "@/models/User";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { Page } from "@/models/page";
+import { DeletedLink } from "@/models/DeletedLink";
+import { Event } from "@/models/Event";
+import { User } from "@/models/User";
 import { connectToDatabase } from "@/libs/mongoClient";
-import {getServerSession} from "next-auth";
+import { getServerSession } from "next-auth";
 import { Education } from "@/models/Education";
 import { WorkExperience } from "@/models/WorkExperience";
 import { Project } from "@/models/Project";
@@ -26,11 +26,11 @@ function sanitizeUrl(url) {
   if (typeof url !== 'string') return '';
   const trimmed = url.trim();
   // Only allow http, https, mailto, tel protocols
-  if (trimmed.startsWith('http://') || 
-      trimmed.startsWith('https://') || 
-      trimmed.startsWith('mailto:') || 
-      trimmed.startsWith('tel:') ||
-      trimmed.startsWith('/')) {
+  if (trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('mailto:') ||
+    trimmed.startsWith('tel:') ||
+    trimmed.startsWith('/')) {
     return trimmed.slice(0, 2000);
   }
   // If no protocol, assume https
@@ -50,7 +50,7 @@ export async function savePageSettings(formData) {
   // ### FIX 1: Added try...catch and {success: ...} response ###
   try {
     const dataKeys = [
-      'displayName','location',
+      'displayName', 'location',
       'bio', 'bgType', 'bgColor', 'bgImage',
     ];
 
@@ -70,15 +70,15 @@ export async function savePageSettings(formData) {
     }
 
     await Page.updateOne(
-      {owner:session?.user?.email},
+      { owner: session?.user?.email },
       dataToUpdate,
     );
 
     if (formData.has('avatar')) {
       const avatarLink = formData.get('avatar');
       await User.updateOne(
-        {email: session.user?.email},
-        {image: avatarLink},
+        { email: session.user?.email },
+        { image: avatarLink },
       );
     }
 
@@ -100,11 +100,14 @@ export async function savePageButtons(formData) {
   try {
     const buttonsValues = {};
     formData.forEach((value, key) => {
-      buttonsValues[key] = value;
+      // Sanitize each button URL/value
+      buttonsValues[key] = ['email', 'mobile'].includes(key)
+        ? sanitizeString(value, 200)
+        : sanitizeUrl(value);
     });
-    const dataToUpdate = {buttons:buttonsValues};
+    const dataToUpdate = { buttons: buttonsValues };
     await Page.updateOne(
-      {owner:session?.user?.email},
+      { owner: session?.user?.email },
       dataToUpdate,
     );
     return { success: true };
@@ -120,15 +123,15 @@ export async function savePageLinks(links) {
   if (!session) {
     return { success: false, message: 'Unauthorized' };
   }
-  
+
   try {
-    const page = await Page.findOne({owner: session?.user?.email});
+    const page = await Page.findOne({ owner: session?.user?.email });
     const currentLinks = page.links || [];
-    
+
     // Find deleted links
     const newLinkUrls = links.map(link => link.url);
     const deletedLinks = currentLinks.filter(link => !newLinkUrls.includes(link.url));
-    
+
     // Store deleted links
     for (const deletedLink of deletedLinks) {
       const totalClicks = await Event.countDocuments({
@@ -136,7 +139,7 @@ export async function savePageLinks(links) {
         type: 'click',
         page: page.uri
       });
-      
+
       await DeletedLink.create({
         originalLinkId: deletedLink.key || deletedLink._id,
         title: deletedLink.title,
@@ -149,11 +152,11 @@ export async function savePageLinks(links) {
         deletedAt: new Date()
       });
     }
-    
+
     // Check for restored links
     const currentLinkUrls = currentLinks.map(link => link.url);
     const restoredLinks = links.filter(link => !currentLinkUrls.includes(link.url));
-    
+
     for (const restoredLink of restoredLinks) {
       await DeletedLink.deleteMany({
         url: restoredLink.url,
@@ -161,13 +164,13 @@ export async function savePageLinks(links) {
         owner: session.user.email
       });
     }
-    
+
     // Update page with new links
     await Page.updateOne(
-      {owner:session?.user?.email},
-      {links},
+      { owner: session?.user?.email },
+      { links },
     );
-    
+
     return { success: true };
   } catch (error) {
     console.error('Error saving links:', error);
@@ -177,16 +180,16 @@ export async function savePageLinks(links) {
 
 export async function savePageEducation(uri, educationData) {
   await connectToDatabase();
-  
+
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error('Unauthorized');
+    return { success: false, message: 'Unauthorized' };
   }
-  
+
   const userEmail = session.user.email;
 
   if (!uri || !Array.isArray(educationData)) {
-    throw new Error('Invalid data provided.');
+    return { success: false, message: 'Invalid data provided.' };
   }
 
   try {
@@ -224,7 +227,7 @@ export async function savePageEducation(uri, educationData) {
 export async function savePageSkills(uri, skillsData) {
   try {
     await connectToDatabase();
-    
+
     const session = await getServerSession(authOptions);
     if (!session) {
       return { success: false, message: 'Unauthorized. Please log in.' };
@@ -244,7 +247,7 @@ export async function savePageSkills(uri, skillsData) {
 
     // Find and update the page by owner email (more reliable than uri match)
     const result = await Page.updateOne(
-      { owner: session.user.email },
+      { owner: session.user.email, uri: uri },
       { $set: { skills: skillsData } }
     );
 
@@ -263,15 +266,15 @@ export async function savePageSkills(uri, skillsData) {
 // This function is correct
 export async function savePageWorkExperience(uri, workData) {
   await connectToDatabase();
-  
+
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error('Unauthorized');
+    return { success: false, message: 'Unauthorized' };
   }
   const userEmail = session.user.email;
 
   if (!uri || !Array.isArray(workData)) {
-    throw new Error('Invalid data provided.');
+    return { success: false, message: 'Invalid data provided.' };
   }
 
   try {
@@ -305,14 +308,14 @@ export async function savePageWorkExperience(uri, workData) {
 // This function is correct
 export async function savePageSummary(uri, summary) {
   await connectToDatabase();
-  
+
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error('Unauthorized');
+    return { success: false, message: 'Unauthorized' };
   }
 
   if (!uri || typeof summary !== 'string') {
-    throw new Error('Invalid data');
+    return { success: false, message: 'Invalid data' };
   }
 
   try {
@@ -334,15 +337,15 @@ export async function savePageSummary(uri, summary) {
 
 export async function savePageProject(uri, projectData) {
   await connectToDatabase();
-  
+
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error('Unauthorized');
+    return { success: false, message: 'Unauthorized' };
   }
   const userEmail = session.user.email;
 
   if (!uri || !Array.isArray(projectData)) {
-    throw new Error('Invalid data provided.');
+    return { success: false, message: 'Invalid data provided.' };
   }
 
   try {

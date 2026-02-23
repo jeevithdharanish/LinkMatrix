@@ -2,67 +2,119 @@
 @tailwind components;
 @tailwind utilities;
 
-body{
-    @apply bg-gray-100;
+/* === Design System Custom Properties === */
+:root {
+  --primary-start: #6366f1;
+  --primary-end: #8b5cf6;
+  --bg-main: #f8fafc;
+  --sidebar-bg: #0f172a;
+  --sidebar-active: rgba(30, 41, 59, 0.6);
+  --card-border: #e2e8f0;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --card-shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
 }
 
-input[type="text"], textarea{
-    @apply bg-gray-100 w-full block py-2 px-2 mb-2;
-}
-label.input-label{
-    @apply uppercase text-gray-400 text-xs mb-2 font-semibold;
-}
-
-.radio-togglers{
-    @apply p-1 bg-gray-200 inline-flex cursor-pointer;
-}
-.radio-togglers div{
-    @apply p-2 px-4 text-gray-500 flex items-center gap-2 cursor-pointer;
-}
-.radio-togglers input[type="radio"]{
-    @apply hidden;
-}
-.radio-togglers input[type="radio"]:checked + div{
-    @apply bg-white text-blue-600;
+body {
+  background-color: var(--bg-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.sortable-ghost{
-    opacity: .2;
+/* === Modern Input Styles === */
+input[type="text"],
+textarea {
+  @apply bg-white w-full block py-3 px-4 mb-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
-/* Mobile Navigation */
-input#navCb:checked ~ aside{
-    transform: translateX(0);
-}
-input#navCb:checked ~ .backdrop{
-    opacity: 1;
-    visibility: visible;
+input[type="text"]:focus,
+textarea:focus {
+  @apply border-indigo-500 outline-none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
-/* === PORTFOLIO ANIMATIONS === */
+label.input-label {
+  @apply uppercase text-gray-500 text-xs mb-2 font-semibold tracking-wider;
+}
 
-/* Slow spinning animation for gradient ring */
+/* === Radio Togglers === */
+.radio-togglers {
+  @apply p-1 bg-gray-100 inline-flex cursor-pointer rounded-xl;
+}
+
+.radio-togglers div {
+  @apply py-2 px-4 text-gray-500 flex items-center gap-2 cursor-pointer rounded-lg text-sm font-medium;
+  transition: all var(--transition-base);
+}
+
+.radio-togglers input[type="radio"] {
+  @apply hidden;
+}
+
+.radio-togglers input[type="radio"]:checked + div {
+  @apply bg-white text-indigo-600 shadow-sm;
+}
+
+/* === Sortable Ghost === */
+.sortable-ghost {
+  opacity: 0.2;
+}
+
+/* === Mobile Navigation === */
+input#navCb:checked ~ aside {
+  transform: translateX(0);
+}
+
+input#navCb:checked ~ .backdrop {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* === Utility Classes === */
+
+/* Gradient Button */
+.gradient-btn {
+  @apply bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium rounded-xl shadow-md;
+  transition: all var(--transition-base);
+}
+
+.gradient-btn:hover {
+  @apply shadow-lg;
+  transform: translateY(-1px);
+}
+
+.gradient-btn:active {
+  transform: translateY(0);
+}
+
+.gradient-btn:disabled {
+  @apply opacity-50 cursor-not-allowed;
+  transform: none;
+}
+
+/* Glass Effect */
+.glass {
+  @apply bg-white/10 backdrop-blur-xl border border-white/20;
+}
+
+/* === ANIMATIONS === */
+
 @keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
 }
 
-/* Gradient text animation */
 @keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .animate-gradient {
@@ -70,21 +122,15 @@ input#navCb:checked ~ .backdrop{
   animation: gradient-shift 3s ease infinite;
 }
 
-/* Floating animation */
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
 
-/* Fade in up animation */
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -110,16 +156,21 @@ input#navCb:checked ~ .backdrop{
 
 /* Glow effect */
 @keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
-  }
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
 }
 
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
 }
 
 /* Smooth scroll behavior */
@@ -127,9 +178,9 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar for portfolio */
+/* Custom scrollbar */
 .portfolio-scroll::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .portfolio-scroll::-webkit-scrollbar-track {
@@ -137,10 +188,24 @@ html {
 }
 
 .portfolio-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
-  border-radius: 4px;
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  border-radius: 3px;
 }
 
 .portfolio-scroll::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #2563eb, #7c3aed);
+  background: linear-gradient(180deg, #4f46e5, #7c3aed);
+}
+
+/* Dark sidebar scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 2px;
 }

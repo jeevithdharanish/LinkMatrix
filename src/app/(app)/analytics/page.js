@@ -4,9 +4,9 @@ import { Event } from "@/models/Event";
 import { Page } from "@/models/page";
 import { DeletedLink } from "@/models/DeletedLink";
 import { Project } from "@/models/Project";
-import { 
+import {
   faEye, faLink, faPercent, faCalendarDay, faArrowUp, faExternalLinkAlt,
-  faEnvelope, faMobile, faFileAlt, faCode, faProjectDiagram 
+  faEnvelope, faMobile, faFileAlt, faCode, faProjectDiagram
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faDiscord, faFacebook, faGithub, faInstagram, faTelegram,
@@ -44,12 +44,12 @@ function buttonLink(key, value) {
 export default async function AnalyticsPage() {
   await mongoose.connect(process.env.MONGO_URI);
   const session = await getServerSession(authOptions);
-  
+
   if (!session) {
     return redirect('/');
   }
 
-  const page = await Page.findOne({ owner: session.user.email }).lean(); 
+  const page = await Page.findOne({ owner: session.user.email }).lean();
   if (!page) {
     return redirect('/claim-username');
   }
@@ -77,7 +77,7 @@ export default async function AnalyticsPage() {
   const totalSocialClicks = socialClicks.length;
   const totalProjectClicks = projectClicks.length;
   const clickRate = totalViews > 0 ? ((totalLinkClicks / totalViews) * 100).toFixed(1) : 0;
-  
+
   // 4. Calculate Today's Stats
   const today = new Date();
   const todayViews = groupedViews.find(v => v._id === format(today, 'yyyy-MM-dd'))?.count || 0;
@@ -148,12 +148,14 @@ export default async function AnalyticsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl">
+      <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 rounded-2xl p-6 text-white shadow-elevated relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <a 
-                href="/account" 
+              <a
+                href="/account"
                 className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,13 +168,13 @@ export default async function AnalyticsPage() {
             <p className="text-indigo-100 mt-1">Track your portfolio performance</p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 text-center">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 text-center border border-white/10">
               <p className="text-2xl font-bold">{totalViews.toLocaleString()}</p>
-              <p className="text-xs text-indigo-100">Total Views</p>
+              <p className="text-xs text-indigo-200/70">Total Views</p>
             </div>
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 text-center">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 text-center border border-white/10">
               <p className="text-2xl font-bold">{(totalLinkClicks + totalSocialClicks + totalProjectClicks).toLocaleString()}</p>
-              <p className="text-xs text-indigo-100">Total Clicks</p>
+              <p className="text-xs text-indigo-200/70">Total Clicks</p>
             </div>
           </div>
         </div>
@@ -180,7 +182,7 @@ export default async function AnalyticsPage() {
 
       {/* Summary Cards Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        
+
         {/* Total Views */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-200 transition-all duration-200">
           <div className="flex items-center justify-between">
@@ -264,7 +266,7 @@ export default async function AnalyticsPage() {
             {topLinks.map((link, index) => {
               const progress = totalLinkClicks > 0 ? (link.totalClicks / totalLinkClicks) * 100 : 0;
               return (
-                <div key={`${link.url}-${index}`} className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div key={`${link.url}-${index}`} className="flex items-center p-4 bg-gray-50/50 rounded-xl border border-gray-200 hover:border-indigo-200 transition-all duration-200">
                   <div className="flex items-center min-w-0 flex-1">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                       <span className="text-sm font-semibold text-blue-600">#{index + 1}</span>
@@ -313,26 +315,26 @@ export default async function AnalyticsPage() {
               const Icon = buttonsIcons[key];
 
               return (
-                <div key={key} className="border border-gray-200 rounded-lg p-4">
-                   <div className="flex flex-col md:flex-row md:items-center gap-4">
-                     <div className="flex-1 min-w-0 flex items-center gap-3">
-                       {Icon && <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><FontAwesomeIcon icon={Icon} className="w-5 h-5 text-gray-600" /></div>}
-                       <div>
-                         <h3 className="font-medium text-gray-900 capitalize">{key}</h3>
-                         <p className="text-sm text-blue-500 truncate">{value}</p>
-                       </div>
-                     </div>
-                     <div className="flex gap-4">
-                        <div className="text-center p-3 bg-blue-50 rounded-lg min-w-[80px]">
-                          <div className="text-xl font-bold text-blue-600">{todayClicks}</div>
-                          <div className="text-xs text-blue-600 font-medium">Today</div>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded-lg min-w-[80px]">
-                          <div className="text-xl font-bold text-gray-900">{totalClicks}</div>
-                          <div className="text-xs text-gray-600 font-medium">Total</div>
-                        </div>
-                     </div>
-                   </div>
+                <div key={key} className="border border-gray-200 rounded-xl p-4 hover:border-indigo-200 transition-all duration-200">
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <div className="flex-1 min-w-0 flex items-center gap-3">
+                      {Icon && <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><FontAwesomeIcon icon={Icon} className="w-5 h-5 text-gray-600" /></div>}
+                      <div>
+                        <h3 className="font-medium text-gray-900 capitalize">{key}</h3>
+                        <p className="text-sm text-blue-500 truncate">{value}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg min-w-[80px]">
+                        <div className="text-xl font-bold text-blue-600">{todayClicks}</div>
+                        <div className="text-xs text-blue-600 font-medium">Today</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg min-w-[80px]">
+                        <div className="text-xl font-bold text-gray-900">{totalClicks}</div>
+                        <div className="text-xs text-gray-600 font-medium">Total</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -357,13 +359,13 @@ export default async function AnalyticsPage() {
               const todayLive = todayProjectClickMap.get(project.liveLink) || 0;
 
               return (
-                <div key={project._id} className="border border-gray-200 rounded-lg p-4">
+                <div key={project._id} className="border border-gray-200 rounded-xl p-4 hover:border-indigo-200 transition-all duration-200">
                   <h3 className="font-medium text-gray-900 truncate mb-3">
                     {project.title || 'Untitled Project'}
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* GitHub Link Stats */}
-                    <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="bg-gray-50 rounded-xl p-3">
                       <div className="flex items-center gap-2 text-gray-700 mb-2">
                         <FontAwesomeIcon icon={faGithub} className="w-4 h-4" />
                         <span className="text-sm font-medium">GitHub</span>
@@ -375,7 +377,7 @@ export default async function AnalyticsPage() {
                       <span className="text-xs text-blue-600 font-medium">{todayGithub} today</span>
                     </div>
                     {/* Live Demo Link Stats */}
-                    <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="bg-gray-50 rounded-xl p-3">
                       <div className="flex items-center gap-2 text-gray-700 mb-2">
                         <FontAwesomeIcon icon={faExternalLinkAlt} className="w-4 h-4" />
                         <span className="text-sm font-medium">Live Demo</span>
@@ -409,7 +411,7 @@ export default async function AnalyticsPage() {
               const todayClicks = todayClickMap.get(link.url) || 0;
 
               return (
-                <div key={`${link.url}-${index}`} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
+                <div key={`${link.url}-${index}`} className="border border-gray-200 rounded-xl p-4 hover:border-indigo-200 transition-all duration-200">
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 truncate">
@@ -427,14 +429,14 @@ export default async function AnalyticsPage() {
                     </div>
 
                     <div className="flex gap-4">
-                      <div className="text-center p-3 bg-blue-50 rounded-lg min-w-[80px]">
-                        <div className="text-xl font-bold text-blue-600">{todayClicks}</div>
-                        <div className="text-xs text-blue-600 font-medium">Today</div>
+                      <div className="text-center p-3 bg-indigo-50 rounded-xl min-w-[80px]">
+                        <div className="text-xl font-bold text-indigo-600">{todayClicks}</div>
+                        <div className="text-xs text-indigo-500 font-medium">Today</div>
                       </div>
 
-                      <div className="text-center p-3 bg-gray-50 rounded-lg min-w-[80px]">
+                      <div className="text-center p-3 bg-gray-50 rounded-xl min-w-[80px]">
                         <div className="text-xl font-bold text-gray-900">{totalClicks}</div>
-                        <div className="text-xs text-gray-600 font-medium">Total</div>
+                        <div className="text-xs text-gray-500 font-medium">Total</div>
                       </div>
                     </div>
                   </div>
