@@ -9,7 +9,7 @@
 
 **A modern, professional portfolio builder that helps you showcase your skills, projects, and experience in one beautiful link.**
 
-[Live Demo](https://linkmatrix.vercel.app) · [Report Bug](https://github.com/jdking123/linkmatrix/issues) · [Request Feature](https://github.com/jdking123/linkmatrix/issues)
+[Live Demo](https://linkmate.vercel.app) · [Report Bug](https://github.com/jdking123/linkmate/issues) · [Request Feature](https://github.com/jdking123/linkmate/issues)
 
 </div>
 
@@ -82,8 +82,8 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/jdking123/linkmatrix.git
-   cd linkmatrix
+   git clone https://github.com/jdking123/linkmate.git
+   cd linkmate
    ```
 
 2. **Install dependencies**
@@ -130,7 +130,7 @@
 ## 📁 Project Structure
 
 ```
-linkmatrix/
+linkmate/
 ├── public/
 │   └── skills/              # Skill icons (SVG)
 ├── src/
@@ -239,7 +239,7 @@ POST /api/click?url={base64_url}&page={uri}&clickType={link|social|project}
 3. Add environment variables
 4. Deploy!
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/jdking123/linkmatrix)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/jdking123/linkmate)
 
 ---
 
@@ -276,7 +276,7 @@ Contributions are welcome! Here's how you can help:
 **Jeevith Dharanish**
 
 [![GitHub](https://img.shields.io/badge/GitHub-@jdking123-181717?style=flat&logo=github)](https://github.com/jdking123)
-[![Portfolio](https://img.shields.io/badge/Portfolio-LinkMatrix-blue?style=flat)](https://linkmatrix.vercel.app/jeevi)
+[![Portfolio](https://img.shields.io/badge/Portfolio-LinkMate-blue?style=flat)](https://linkmate.vercel.app/jeevi)
 
 ---
 

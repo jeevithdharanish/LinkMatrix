@@ -13,7 +13,7 @@ export default function Header() {
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100">
       <div className="max-w-5xl flex justify-between items-center mx-auto px-6 py-3">
         <Link href="/" className="flex items-center gap-2.5 group">
-    <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-sm">
+          <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-sm">
             <FontAwesomeIcon icon={faLink} className="text-white text-sm" />
           </div>
           <span className="font-bold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors duration-200">
