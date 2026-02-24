@@ -1,4 +1,4 @@
-# LinkMatrix 🔗
+# LinkMate 🔗
 
 <div align="center">
 

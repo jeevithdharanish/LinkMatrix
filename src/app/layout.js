@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700'] }
 export const metadata = {
   title: 'LinkMate - Your one link for everything',
   description: 'Share your profiles, contact info and more on one page',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }) {

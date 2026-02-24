@@ -26,16 +26,16 @@ export default async function HomePage() {
           <div className="mb-10">
             <div className="inline-flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-medium px-4 py-1.5 rounded-full mb-6">
               <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
-              Your link-in-bio, reimagined
+              Build your digital identity
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tight leading-[1.1]">
-              Your one link<br />
+              One page to show<br />
               <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                for everything
+                who you are
               </span>
             </h1>
             <h2 className="text-gray-500 text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
-              Share your links, social profiles, contact info and more on one beautiful page
+              Showcase your projects, skills, experience, and links — all on a single, stunning portfolio page
             </h2>
           </div>
           <HeroForm />

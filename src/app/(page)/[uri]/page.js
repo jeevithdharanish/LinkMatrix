@@ -63,12 +63,12 @@ export async function generateMetadata({ params }) {
 
     if (!page) {
       return {
-        title: 'Portfolio Not Found | LinkMatrix',
+        title: 'Portfolio Not Found | LinkMate',
         description: 'This portfolio page does not exist.',
       };
     }
 
-    const title = `${page.displayName || 'Portfolio'} | LinkMatrix`;
+    const title = `${page.displayName || 'Portfolio'} | LinkMate`;
     const description = page.bio || page.summary?.slice(0, 160) || `Check out ${page.displayName}'s professional portfolio`;
     const imageUrl = page.profileImage || '/profile.jpg';
 
@@ -93,7 +93,7 @@ export async function generateMetadata({ params }) {
     };
   } catch (error) {
     return {
-      title: 'Portfolio | LinkMatrix',
+      title: 'Portfolio | LinkMate',
       description: 'Professional portfolio page',
     };
   }
