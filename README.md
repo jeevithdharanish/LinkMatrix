@@ -149,15 +149,15 @@ linkmate/
 │   │   │   └── upload/      # S3 file uploads
 │   │   └── main/            # Landing & login pages
 │   ├── components/
-│   │   ├── buttons/         # SubmitButton, LoginWithGoogle
-│   │   ├── forms/           # All form components
-│   │   ├── layout/          # SectionBox, AppSideBar, AccountHeader
-│   │   └── profile/         # Portfolio section components
-│   ├── libs/
+│   │   ├── ui/              # Reusable core controls (FormHeader, submit buttons)
+│   │   ├── layout/          # Page outlines (SectionBox, AppSideBar, AccountHeader)
+│   │   └── features/        # Modular page features (analytics, portfolio editors/sections)
+│   ├── lib/
 │   │   ├── mongoClient.js   # Database connection utility
-│   │   └── upload.js        # S3 upload utility
+│   │   ├── upload.js        # S3 upload utility
+│   │   └── analytics.js     # Analytics aggregation & caching queries
 │   └── models/              # MongoDB schemas
-│       ├── page.js          # Main portfolio schema
+│       ├── Page.js          # Main portfolio schema (PascalCase)
 │       ├── User.js
 │       ├── Education.js
 │       ├── Project.js
