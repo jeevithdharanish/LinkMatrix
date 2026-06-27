@@ -1,45 +1,21 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import Chart from "@/components/Chart";
-import { Event } from "@/models/Event";
-import { Page } from "@/models/page";
-import { DeletedLink } from "@/models/DeletedLink";
-import { Project } from "@/models/Project";
+import Chart from "@/components/features/analytics/Chart";
+import ActivityFeed from "@/components/features/analytics/ActivityFeed";
+import BreakdownCard from "@/components/features/analytics/BreakdownCard";
+import StatCard from "@/components/features/analytics/StatCard";
+import WeekTotalStats from "@/components/features/analytics/WeekTotalStats";
+import { getAnalytics } from "@/lib/analytics";
+import { buttonsIcons, buttonLink } from "@/lib/socialButtons";
+import { Page } from "@/models/Page";
 import {
-  faEye, faLink, faPercent, faCalendarDay, faArrowUp, faExternalLinkAlt,
-  faEnvelope, faMobile, faFileAlt, faCode, faProjectDiagram
+  faEye, faLink, faPercent, faExternalLinkAlt, faProjectDiagram,
+  faGlobe, faLocationDot, faDesktop
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  faDiscord, faFacebook, faGithub, faInstagram, faTelegram,
-  faTiktok, faWhatsapp, faYoutube, faLinkedin
-} from "@fortawesome/free-brands-svg-icons";
+import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { isToday, format } from "date-fns";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-
-// Helper map & function
-export const buttonsIcons = {
-  email: faEnvelope,
-  mobile: faMobile,
-  instagram: faInstagram,
-  facebook: faFacebook,
-  linkedin: faLinkedin,
-  youtube: faYoutube,
-  github: faGithub,
-  geeksforgeeks: faCode,
-  resume: faFileAlt,
-  discord: faDiscord,
-  tiktok: faTiktok,
-  whatsapp: faWhatsapp,
-  telegram: faTelegram,
-};
-
-function buttonLink(key, value) {
-  if (key === 'mobile') return 'tel:' + value;
-  if (key === 'email') return 'mailto:' + value;
-  return value;
-}
 
 export default async function AnalyticsPage() {
   await mongoose.connect(process.env.MONGO_URI);
@@ -54,96 +30,17 @@ export default async function AnalyticsPage() {
     return redirect('/claim-username');
   }
 
-  // 1. Fetch all data
-  const [allClicks, deletedLinks, groupedViews, projects] = await Promise.all([
-    Event.find({ page: page.uri, type: 'click' }).lean(),
-    DeletedLink.find({ pageUri: page.uri, owner: session.user.email }).lean(),
-    Event.aggregate([
-      { $match: { type: 'view', uri: page.uri } },
-      { $group: { _id: { $dateToString: { date: "$createdAt", format: "%Y-%m-%d" } }, count: { $sum: 1 } } },
-      { $sort: { _id: 1 } }
-    ]),
-    Project.find({ owner: session.user.email, pageUri: page.uri }).lean(),
-  ]);
+  const analytics = await getAnalytics(page.uri, session.user.email);
 
-  // 2. Filter clicks into THREE separate groups
-  const linkClicks = allClicks.filter(c => c.clickType === 'link' || !c.clickType);
-  const socialClicks = allClicks.filter(c => c.clickType === 'social');
-  const projectClicks = allClicks.filter(c => c.clickType === 'project');
+  const summaryCards = [
+    { label: 'Total Views', value: analytics.totalViews.toLocaleString(), today: `${analytics.todayViews} today`, icon: faEye, color: 'emerald', trend: analytics.viewTrend },
+    { label: 'Link Clicks', value: analytics.totalLinkClicks.toLocaleString(), today: `${analytics.todayLinkClicks} today`, icon: faLink, color: 'blue', trend: analytics.linkTrend },
+    { label: 'Social Clicks', value: analytics.totalSocialClicks.toLocaleString(), today: `${analytics.todaySocialClicks} today`, icon: faExternalLinkAlt, color: 'purple', trend: analytics.socialTrend },
+    { label: 'Project Clicks', value: analytics.totalProjectClicks.toLocaleString(), today: `${analytics.todayProjectClicks} today`, icon: faProjectDiagram, color: 'rose', trend: analytics.projectTrend },
+    { label: 'Click Rate', value: `${analytics.clickRate}%`, today: `${analytics.todayClickRate}% today`, icon: faPercent, color: 'amber', note: 'link clicks / views' },
+  ];
 
-  // 3. Calculate Totals
-  const totalViews = groupedViews.reduce((acc, curr) => acc + curr.count, 0);
-  const totalLinkClicks = linkClicks.length;
-  const totalSocialClicks = socialClicks.length;
-  const totalProjectClicks = projectClicks.length;
-  const clickRate = totalViews > 0 ? ((totalLinkClicks / totalViews) * 100).toFixed(1) : 0;
-
-  // 4. Calculate Today's Stats
-  const today = new Date();
-  const todayViews = groupedViews.find(v => v._id === format(today, 'yyyy-MM-dd'))?.count || 0;
-  const todayLinkClicks = linkClicks.filter(c => isToday(new Date(c.createdAt))).length;
-  const todaySocialClicks = socialClicks.filter(c => isToday(new Date(c.createdAt))).length;
-  const todayProjectClicks = projectClicks.filter(c => isToday(new Date(c.createdAt))).length;
-
-  // 5. Process LINK Clicks (Map for quick lookup)
-  const linkClickMap = new Map();
-  const todayClickMap = new Map();
-  linkClicks.forEach(click => {
-    const url = click.uri;
-    linkClickMap.set(url, (linkClickMap.get(url) || 0) + 1);
-    if (isToday(new Date(click.createdAt))) {
-      todayClickMap.set(url, (todayClickMap.get(url) || 0) + 1);
-    }
-  });
-
-  // 6. Process SOCIAL Clicks
-  const socialClickMap = new Map();
-  const todaySocialClickMap = new Map();
-  socialClicks.forEach(click => {
-    const url = click.uri;
-    socialClickMap.set(url, (socialClickMap.get(url) || 0) + 1);
-    if (isToday(new Date(click.createdAt))) {
-      todaySocialClickMap.set(url, (todaySocialClickMap.get(url) || 0) + 1);
-    }
-  });
-
-  // 7. Process PROJECT Clicks
-  const projectClickMap = new Map();
-  const todayProjectClickMap = new Map();
-  projectClicks.forEach(click => {
-    const url = click.uri;
-    projectClickMap.set(url, (projectClickMap.get(url) || 0) + 1);
-    if (isToday(new Date(click.createdAt))) {
-      todayProjectClickMap.set(url, (todayProjectClickMap.get(url) || 0) + 1);
-    }
-  });
-
-  // Prepare Lists for Display
-  const activeLinks = page.links.map(link => ({
-    title: link.title || 'Untitled Link',
-    url: link.url,
-    totalClicks: linkClickMap.get(link.url) || 0,
-    todayClicks: todayClickMap.get(link.url) || 0,
-    isDeleted: false
-  }));
-
-  const deletedLinksData = deletedLinks.map(link => ({
-    title: link.title || 'Deleted Link',
-    url: link.url,
-    totalClicks: linkClicks.filter(c =>
-      c.uri === link.url && new Date(c.createdAt) <= new Date(link.deletedAt)
-    ).length,
-    todayClicks: 0,
-    isDeleted: true
-  }));
-
-  const allLinks = [...activeLinks, ...deletedLinksData];
-  const topLinks = allLinks.sort((a, b) => b.totalClicks - a.totalClicks).slice(0, 5);
-
-  const chartData = groupedViews.map(item => ({
-    date: item._id,
-    views: item.count,
-  }));
+  const totalClicks = analytics.totalLinkClicks + analytics.totalSocialClicks + analytics.totalProjectClicks;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -169,123 +66,110 @@ export default async function AnalyticsPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 text-center border border-white/10">
-              <p className="text-2xl font-bold">{totalViews.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{analytics.totalViews.toLocaleString()}</p>
               <p className="text-xs text-indigo-200/70">Total Views</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 text-center border border-white/10">
-              <p className="text-2xl font-bold">{(totalLinkClicks + totalSocialClicks + totalProjectClicks).toLocaleString()}</p>
+              <p className="text-2xl font-bold">{totalClicks.toLocaleString()}</p>
               <p className="text-xs text-indigo-200/70">Total Clicks</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 text-center border border-white/10">
+              <p className="text-2xl font-bold">{analytics.uniqueVisitors.toLocaleString()}</p>
+              <p className="text-xs text-indigo-200/70">Unique Visitors</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Summary Cards Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-        {/* Total Views */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-emerald-200 transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Views</p>
-              <p className="text-2xl font-bold text-gray-900">{totalViews.toLocaleString()}</p>
-              <p className="text-xs text-emerald-600 mt-1 flex items-center">
-                <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
-                {todayViews} today
-              </p>
-            </div>
-            <div className="p-3 bg-emerald-100 rounded-xl">
-              <FontAwesomeIcon icon={faEye} className="text-xl text-emerald-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Link Clicks */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Link Clicks</p>
-              <p className="text-2xl font-bold text-gray-900">{totalLinkClicks.toLocaleString()}</p>
-              <p className="text-xs text-blue-600 mt-1 flex items-center">
-                <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
-                {todayLinkClicks} today
-              </p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <FontAwesomeIcon icon={faLink} className="text-xl text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Social Clicks */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Social Clicks</p>
-              <p className="text-2xl font-bold text-gray-900">{totalSocialClicks.toLocaleString()}</p>
-              <p className="text-xs text-purple-600 mt-1 flex items-center">
-                <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
-                {todaySocialClicks} today
-              </p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-xl">
-              <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xl text-purple-600" />
-            </div>
-          </div>
-        </div>
-
-        {/* Project Clicks (NEW CARD) */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-rose-200 transition-all duration-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Project Clicks</p>
-              <p className="text-2xl font-bold text-gray-900">{totalProjectClicks.toLocaleString()}</p>
-              <p className="text-xs text-rose-600 mt-1 flex items-center">
-                <FontAwesomeIcon icon={faCalendarDay} className="mr-1" />
-                {todayProjectClicks} today
-              </p>
-            </div>
-            <div className="p-3 bg-rose-100 rounded-xl">
-              <FontAwesomeIcon icon={faProjectDiagram} className="text-xl text-rose-600" />
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        {summaryCards.map(card => (
+          <StatCard key={card.label} {...card} />
+        ))}
       </div>
 
       {/* Chart */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Views Over Time</h2>
-        <Chart data={chartData} />
+      <div className="glass glass-hover rounded-2xl p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white dark:text-white mb-6">Views & Clicks Over Time</h2>
+        <Chart data={analytics.chartData} />
       </div>
 
-      {/* Top Performing Links (Shows only main links) */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Top Performing Links</h2>
-        {topLinks.length > 0 ? (
+      {/* Audience: where visitors come from, where they are, what they use */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <BreakdownCard
+          title="Traffic Sources"
+          subtitle={`${analytics.uniqueVisitors} unique ${analytics.uniqueVisitors === 1 ? 'visitor' : 'visitors'} · ${analytics.returningVisitors} returning`}
+          icon={faGlobe}
+          color="indigo"
+          items={analytics.trafficSources}
+          total={analytics.totalSourceViews}
+          emptyText="No visitor data yet — collecting from your next page view"
+        />
+        <BreakdownCard
+          title="Top Locations"
+          subtitle="where your visitors are"
+          icon={faLocationDot}
+          color="rose"
+          items={analytics.topLocations}
+          total={analytics.totalSourceViews}
+          emptyText="No location data yet — appears once visitors arrive on the deployed site"
+        />
+        <BreakdownCard
+          title="Devices"
+          subtitle="how visitors view your page"
+          icon={faDesktop}
+          color="emerald"
+          items={analytics.devices}
+          total={analytics.totalSourceViews}
+          emptyText="No device data yet — collecting from your next page view"
+        />
+      </div>
+
+      {/* Recent Visitor Activity */}
+      <ActivityFeed sessions={analytics.recentSessions} />
+
+      {/* Links Performance: all links ranked by clicks, deleted links at the bottom */}
+      <div className="glass glass-hover rounded-2xl p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white dark:text-white mb-6">Links Performance</h2>
+        {analytics.linksPerformance.length > 0 ? (
           <div className="space-y-4">
-            {topLinks.map((link, index) => {
-              const progress = totalLinkClicks > 0 ? (link.totalClicks / totalLinkClicks) * 100 : 0;
+            {analytics.linksPerformance.map((link, index) => {
+              const progress = analytics.totalLinkClicks > 0 ? (link.totalClicks / analytics.totalLinkClicks) * 100 : 0;
               return (
-                <div key={`${link.url}-${index}`} className="flex items-center p-4 bg-gray-50/50 rounded-xl border border-gray-200 hover:border-indigo-200 transition-all duration-200">
+                <div key={`${link.url}-${index}`} className="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-gray-50/50 dark:bg-slate-850/50 rounded-xl border border-gray-200 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200">
                   <div className="flex items-center min-w-0 flex-1">
                     <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
                       <span className="text-sm font-semibold text-blue-600">#{index + 1}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`font-medium truncate ${link.isDeleted ? 'text-red-600' : 'text-gray-900'}`}>
+                      <p className={`font-medium truncate ${link.isDeleted ? 'text-red-600' : 'text-gray-900 dark:text-white dark:text-white'}`}>
                         {link.title}
+                        {link.isDeleted && (
+                          <span className="ml-2 px-2 py-0.5 bg-red-50 dark:bg-red-950/20 text-red-500 dark:text-red-400 rounded-full text-xs font-medium align-middle">
+                            deleted
+                          </span>
+                        )}
                       </p>
-                      <p className="text-sm text-gray-500 truncate">{link.url}</p>
+                      {link.isDeleted ? (
+                        <p className="text-sm text-gray-400 dark:text-slate-500 truncate">{link.url}</p>
+                      ) : (
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-500 hover:text-blue-700 truncate block"
+                        >
+                          {link.url}
+                          <FontAwesomeIcon icon={faExternalLinkAlt} className="ml-1 text-xs" />
+                        </a>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4 ml-4">
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-gray-900">{link.totalClicks}</p>
-                      <p className="text-xs text-gray-500">clicks</p>
-                    </div>
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
+                  <div className="flex items-center gap-4 md:ml-4">
+                    <WeekTotalStats week={link.weekClicks} total={link.totalClicks} color="indigo" />
+                    <div className="w-20 bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${link.isDeleted ? 'bg-red-400' : 'bg-blue-500'}`}
+                        className={`h-2 rounded-full ${link.isDeleted ? 'bg-red-400' : 'bg-blue-500 dark:bg-blue-600'}`}
                         style={{ width: `${Math.max(progress, 2)}%` }}
                       ></div>
                     </div>
@@ -295,163 +179,99 @@ export default async function AnalyticsPage() {
             })}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <FontAwesomeIcon icon={faLink} className="text-4xl mb-4 text-gray-300" />
-            <p>No link clicks yet</p>
-          </div>
-        )}
-      </div>
-
-      {/* Socials Performance */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Socials Performance</h2>
-        {Object.keys(page.buttons || {}).length > 0 ? (
-          <div className="space-y-4">
-            {Object.entries(page.buttons).map(([key, value]) => {
-              if (!value) return null;
-              const realUrl = buttonLink(key, value);
-              const totalClicks = socialClickMap.get(realUrl) || 0;
-              const todayClicks = todaySocialClickMap.get(realUrl) || 0;
-              const Icon = buttonsIcons[key];
-
-              return (
-                <div key={key} className="border border-gray-200 rounded-xl p-4 hover:border-indigo-200 transition-all duration-200">
-                  <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <div className="flex-1 min-w-0 flex items-center gap-3">
-                      {Icon && <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center"><FontAwesomeIcon icon={Icon} className="w-5 h-5 text-gray-600" /></div>}
-                      <div>
-                        <h3 className="font-medium text-gray-900 capitalize">{key}</h3>
-                        <p className="text-sm text-blue-500 truncate">{value}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-4">
-                      <div className="text-center p-3 bg-blue-50 rounded-lg min-w-[80px]">
-                        <div className="text-xl font-bold text-blue-600">{todayClicks}</div>
-                        <div className="text-xs text-blue-600 font-medium">Today</div>
-                      </div>
-                      <div className="text-center p-3 bg-gray-50 rounded-lg min-w-[80px]">
-                        <div className="text-xl font-bold text-gray-900">{totalClicks}</div>
-                        <div className="text-xs text-gray-600 font-medium">Total</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            <FontAwesomeIcon icon={faExternalLinkAlt} className="text-4xl mb-4 text-gray-300" />
-            <p>No social buttons added yet</p>
-          </div>
-        )}
-      </div>
-
-      {/* Projects Performance (NEW SECTION) */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Projects Performance</h2>
-        {projects.length > 0 ? (
-          <div className="space-y-4">
-            {projects.map((project) => {
-              const githubClicks = projectClickMap.get(project.githubLink) || 0;
-              const liveClicks = projectClickMap.get(project.liveLink) || 0;
-              const todayGithub = todayProjectClickMap.get(project.githubLink) || 0;
-              const todayLive = todayProjectClickMap.get(project.liveLink) || 0;
-
-              return (
-                <div key={project._id} className="border border-gray-200 rounded-xl p-4 hover:border-indigo-200 transition-all duration-200">
-                  <h3 className="font-medium text-gray-900 truncate mb-3">
-                    {project.title || 'Untitled Project'}
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* GitHub Link Stats */}
-                    <div className="bg-gray-50 rounded-xl p-3">
-                      <div className="flex items-center gap-2 text-gray-700 mb-2">
-                        <FontAwesomeIcon icon={faGithub} className="w-4 h-4" />
-                        <span className="text-sm font-medium">GitHub</span>
-                      </div>
-                      <div className="flex items-baseline gap-4">
-                        <span className="text-2xl font-bold text-gray-900">{githubClicks}</span>
-                        <span className="text-sm text-gray-600">clicks</span>
-                      </div>
-                      <span className="text-xs text-blue-600 font-medium">{todayGithub} today</span>
-                    </div>
-                    {/* Live Demo Link Stats */}
-                    <div className="bg-gray-50 rounded-xl p-3">
-                      <div className="flex items-center gap-2 text-gray-700 mb-2">
-                        <FontAwesomeIcon icon={faExternalLinkAlt} className="w-4 h-4" />
-                        <span className="text-sm font-medium">Live Demo</span>
-                      </div>
-                      <div className="flex items-baseline gap-4">
-                        <span className="text-2xl font-bold text-gray-900">{liveClicks}</span>
-                        <span className="text-sm text-gray-600">clicks</span>
-                      </div>
-                      <span className="text-xs text-blue-600 font-medium">{todayLive} today</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-gray-500">
-            <FontAwesomeIcon icon={faProjectDiagram} className="text-4xl mb-4 text-gray-300" />
-            <p>No projects added yet</p>
-          </div>
-        )}
-      </div>
-
-      {/* Detailed Link Analytics */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">All Links Performance</h2>
-        {page.links.length > 0 ? (
-          <div className="space-y-4">
-            {page.links.map((link, index) => {
-              const totalClicks = linkClickMap.get(link.url) || 0;
-              const todayClicks = todayClickMap.get(link.url) || 0;
-
-              return (
-                <div key={`${link.url}-${index}`} className="border border-gray-200 rounded-xl p-4 hover:border-indigo-200 transition-all duration-200">
-                  <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate">
-                        {link.title || 'Untitled Link'}
-                      </h3>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-500 hover:text-blue-700 truncate block"
-                      >
-                        {link.url}
-                        <FontAwesomeIcon icon={faExternalLinkAlt} className="ml-1 text-xs" />
-                      </a>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="text-center p-3 bg-indigo-50 rounded-xl min-w-[80px]">
-                        <div className="text-xl font-bold text-indigo-600">{todayClicks}</div>
-                        <div className="text-xs text-indigo-500 font-medium">Today</div>
-                      </div>
-
-                      <div className="text-center p-3 bg-gray-50 rounded-xl min-w-[80px]">
-                        <div className="text-xl font-bold text-gray-900">{totalClicks}</div>
-                        <div className="text-xs text-gray-500 font-medium">Total</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 dark:text-slate-400">
             <FontAwesomeIcon icon={faLink} className="text-4xl mb-4 text-gray-300" />
             <p>No links added yet</p>
             <p className="text-sm mt-2">Add some links to see their performance</p>
           </div>
         )}
       </div>
+
+      {/* Socials Performance */}
+      <div className="glass glass-hover rounded-2xl p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white dark:text-white mb-6">Socials Performance</h2>
+        {Object.keys(page.buttons || {}).length > 0 ? (
+          <div className="space-y-4">
+            {Object.entries(page.buttons).map(([key, value]) => {
+              if (!value) return null;
+              const realUrl = buttonLink(key, value);
+              const Icon = buttonsIcons[key];
+
+              return (
+                <div key={key} className="border border-gray-200 dark:border-slate-800 rounded-xl p-4 hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200">
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <div className="flex-1 min-w-0 flex items-center gap-3">
+                      {Icon && <div className="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-slate-800 rounded-lg flex items-center justify-center"><FontAwesomeIcon icon={Icon} className="w-5 h-5 text-gray-600 dark:text-slate-450 dark:text-slate-400" /></div>}
+                      <div>
+                        <h3 className="font-medium text-gray-900 dark:text-white dark:text-white capitalize">{key}</h3>
+                        <p className="text-sm text-blue-500 truncate">{value}</p>
+                      </div>
+                    </div>
+                    <WeekTotalStats
+                      week={analytics.socialClickMaps.week.get(realUrl) || 0}
+                      total={analytics.socialClickMaps.total.get(realUrl) || 0}
+                      color="blue"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500 dark:text-slate-400">
+            <FontAwesomeIcon icon={faExternalLinkAlt} className="text-4xl mb-4 text-gray-300" />
+            <p>No social buttons added yet</p>
+          </div>
+        )}
+      </div>
+
+      {/* Projects Performance */}
+      <div className="glass glass-hover rounded-2xl p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white dark:text-white mb-6">Projects Performance</h2>
+        {analytics.projects.length > 0 ? (
+          <div className="space-y-4">
+            {analytics.projects.map((project) => (
+              <div key={project._id} className="border border-gray-200 dark:border-slate-800 rounded-xl p-4 hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200">
+                <h3 className="font-medium text-gray-900 dark:text-white dark:text-white truncate mb-3">
+                  {project.title || 'Untitled Project'}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* GitHub Link Stats */}
+                  <div className="bg-gray-50 dark:bg-slate-800/40 rounded-xl p-3">
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-slate-350 mb-2">
+                      <FontAwesomeIcon icon={faGithub} className="w-4 h-4" />
+                      <span className="text-sm font-medium">GitHub</span>
+                    </div>
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">{analytics.projectClickMaps.total.get(project.githubLink) || 0}</span>
+                      <span className="text-sm text-gray-600 dark:text-slate-450 dark:text-slate-400">clicks</span>
+                    </div>
+                    <span className="text-xs text-blue-600 font-medium">{analytics.projectClickMaps.week.get(project.githubLink) || 0} this week</span>
+                  </div>
+                  {/* Live Demo Link Stats */}
+                  <div className="bg-gray-50 dark:bg-slate-800/40 rounded-xl p-3">
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-slate-350 mb-2">
+                      <FontAwesomeIcon icon={faExternalLinkAlt} className="w-4 h-4" />
+                      <span className="text-sm font-medium">Live Demo</span>
+                    </div>
+                    <div className="flex items-baseline gap-4">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">{analytics.projectClickMaps.total.get(project.liveLink) || 0}</span>
+                      <span className="text-sm text-gray-600 dark:text-slate-450 dark:text-slate-400">clicks</span>
+                    </div>
+                    <span className="text-xs text-blue-600 font-medium">{analytics.projectClickMaps.week.get(project.liveLink) || 0} this week</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500 dark:text-slate-400">
+            <FontAwesomeIcon icon={faProjectDiagram} className="text-4xl mb-4 text-gray-300" />
+            <p>No projects added yet</p>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

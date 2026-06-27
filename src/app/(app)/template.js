@@ -1,9 +1,9 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import AppSidebar from "@/components/layout/AppSideBar";
-import { Page } from "@/models/page";
+import { Page } from "@/models/Page";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { connectToDatabase } from "@/libs/mongoClient";
+import { connectToDatabase } from "@/lib/mongoClient";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -35,7 +35,7 @@ export default async function AppTemplate({ children }) {
           },
         }}
       />
-      <main className="md:flex min-h-screen bg-slate-50">
+      <main className="md:flex min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
         {/* Mobile Navigation Toggle */}
         <label
           htmlFor="navCb"

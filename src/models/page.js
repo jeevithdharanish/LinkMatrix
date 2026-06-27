@@ -1,20 +1,3 @@
-// import {model, models, Schema} from "mongoose";
-
-// const PageSchema = new Schema({
-//   uri: {type: String, required: true, min: 1, unique: true},
-//   owner: {type: String, required: true},
-//   displayName: {type: String, default: ''},
-//   location: {type: String, default: ''},
-//   bio: {type: String, default: ''},
-//   bgType: {type: String, default: 'color'},
-//   bgColor: {type: String, default: '#000'},
-//   bgImage: {type: String, default: ''},
-//   buttons: {type: Object, default: {}},
-//   links: {type: Object, default: []},
-// }, {timestamps: true});
-
-// export const Page = models?.Page || model('Page', PageSchema);
-
 import { model, models, Schema } from "mongoose";
 
 // Skill item schema with name and proficiency
@@ -49,7 +32,9 @@ const PageSchema = new Schema({
     type: Schema.Types.Mixed,
     default: {}
   },
-  summary: { type: String, default: "" }
+  summary: { type: String, default: "" },
+  // "Available for opportunities" badge on the public page
+  showAvailableBadge: { type: Boolean, default: true }
 
 }, { timestamps: true });
 

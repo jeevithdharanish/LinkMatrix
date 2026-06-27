@@ -1,5 +1,9 @@
 import { Event } from "@/models/Event";
-import { connectToDatabase } from "@/libs/mongoClient";
+import { Page } from "@/models/Page";
+import { connectToDatabase } from "@/lib/mongoClient";
+import { getVisitorMeta, isBot } from "@/lib/track";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -27,11 +31,25 @@ export async function POST(req) {
     const validClickTypes = ['link', 'social', 'project'];
     const safeClickType = validClickTypes.includes(clickType) ? clickType : 'link';
 
+    const visitorMeta = getVisitorMeta(req.headers);
+    if (isBot(visitorMeta.userAgent)) {
+      return NextResponse.json({ success: true });
+    }
+
+    // Flag the owner's own clicks so analytics can exclude them
+    const [session, pageDoc] = await Promise.all([
+      getServerSession(authOptions).catch(() => null),
+      Page.findOne({ uri: page }).select('owner').lean(),
+    ]);
+    const isOwner = !!session?.user?.email && session.user.email === pageDoc?.owner;
+
     await Event.create({
       type: 'click',
       page: page,
       uri: decodedUrl,
       clickType: safeClickType,
+      ...visitorMeta,
+      isOwner,
     });
 
     return NextResponse.json({ success: true });

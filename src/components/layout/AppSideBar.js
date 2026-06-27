@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function AppSidebar() {
     const path = usePathname();
@@ -39,6 +40,7 @@ export default function AppSidebar() {
             </div>
 
             <div className="mt-auto pt-6 space-y-1.5 border-t border-slate-700/50">
+                <ThemeToggle variant="sidebar" />
                 <Link
                     href="/main"
                     className="flex items-center gap-3 text-sm text-slate-500 px-3 py-2.5 rounded-xl hover:text-slate-300 hover:bg-white/5 transition-all duration-200"

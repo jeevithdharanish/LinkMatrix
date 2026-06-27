@@ -1,8 +1,8 @@
 'use server';
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { connectToDatabase } from "@/libs/mongoClient";
+import { connectToDatabase } from "@/lib/mongoClient";
 import { getServerSession } from "next-auth";
-import { Page } from '@/models/page';
+import { Page } from '@/models/Page';
 
 export default async function grabUsername({ username }) {
   await connectToDatabase();

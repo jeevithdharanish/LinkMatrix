@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
+// Public site address shown in the "your page" link — override via env when the domain changes
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://LinkMate.vercel.app';
+
 export default function AccountHeader({ uri }) {
   const [copied, setCopied] = useState(false);
-  const fullUrl = `https://LinkMate.vercel.app/${uri}`;
+  const fullUrl = `${SITE_URL}/${uri}`;
 
   const copyToClipboard = async () => {
     try {

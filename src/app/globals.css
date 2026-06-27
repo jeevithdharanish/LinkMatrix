@@ -18,17 +18,29 @@
   --radius-2xl: 1.25rem;
 }
 
+.dark {
+  --bg-main: #0b0f19;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  --card-shadow-hover: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
 body {
   background-color: var(--bg-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  @apply transition-colors duration-300;
 }
 
 /* === Modern Input Styles === */
 input[type="text"],
 textarea {
-  @apply bg-white w-full block py-3 px-4 mb-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400;
-  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+  @apply bg-white w-full block py-3 px-4 mb-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-200;
+}
+
+.dark input[type="text"],
+.dark textarea {
+  @apply bg-slate-800/40 border-slate-700/60 text-white placeholder-slate-500 backdrop-blur-sm;
 }
 
 input[type="text"]:focus,
@@ -37,18 +49,34 @@ textarea:focus {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+.dark input[type="text"]:focus,
+.dark textarea:focus {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
 label.input-label {
-  @apply uppercase text-gray-500 text-xs mb-2 font-semibold tracking-wider;
+  @apply uppercase text-gray-500 text-xs mb-2 font-semibold tracking-wider transition-colors duration-200;
+}
+
+.dark label.input-label {
+  @apply text-slate-400;
 }
 
 /* === Radio Togglers === */
 .radio-togglers {
-  @apply p-1 bg-gray-100 inline-flex cursor-pointer rounded-xl;
+  @apply p-1 bg-gray-100 inline-flex cursor-pointer rounded-xl transition-colors duration-200;
+}
+
+.dark .radio-togglers {
+  @apply bg-slate-850/60 border border-slate-800/50;
 }
 
 .radio-togglers div {
-  @apply py-2 px-4 text-gray-500 flex items-center gap-2 cursor-pointer rounded-lg text-sm font-medium;
-  transition: all var(--transition-base);
+  @apply py-2 px-4 text-gray-500 flex items-center gap-2 cursor-pointer rounded-lg text-sm font-medium transition-all duration-200;
+}
+
+.dark .radio-togglers div {
+  @apply text-slate-400;
 }
 
 .radio-togglers input[type="radio"] {
@@ -57,6 +85,10 @@ label.input-label {
 
 .radio-togglers input[type="radio"]:checked+div {
   @apply bg-white text-indigo-600 shadow-sm;
+}
+
+.dark .radio-togglers input[type="radio"]:checked+div {
+  @apply bg-slate-800 text-indigo-400 shadow-md;
 }
 
 /* === Sortable Ghost === */
@@ -100,10 +132,15 @@ input#navCb:checked~.backdrop {
   @apply ring-2 ring-offset-2 ring-indigo-400 outline-none;
 }
 
-/* Glass Effect */
+/* Glassmorphism theme cards */
 .glass {
-  @apply bg-white/10 backdrop-blur-xl border border-white/20;
+  @apply bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/30 dark:border-slate-800/30 shadow-sm transition-all duration-300;
 }
+
+.glass-hover {
+  @apply hover:bg-white/60 dark:hover:bg-slate-900/60 hover:shadow-md hover:border-white/50 dark:hover:border-slate-700/50;
+}
+
 
 /* === ANIMATIONS === */
 
@@ -152,6 +189,15 @@ input#navCb:checked~.backdrop {
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 0.8s step-end infinite;
 }
 
 @keyframes fade-in-up {
@@ -426,4 +472,22 @@ html {
   .dot-pulse {
     animation: none;
   }
+}
+
+/* === Global Brand Gradients === */
+.bg-brand-grad {
+  @apply bg-gradient-to-r from-indigo-600 to-violet-600;
+}
+
+.bg-brand-grad-deep {
+  @apply bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700;
+}
+
+.text-brand-grad {
+  @apply bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent;
+}
+
+/* === Reusable Dashed Add Buttons === */
+.btn-dashed-add {
+  @apply w-full py-3 px-4 border-2 border-dashed border-gray-200/60 dark:border-slate-700/60 rounded-xl text-gray-500 hover:text-indigo-600 hover:border-indigo-500/60 dark:hover:text-indigo-400 dark:hover:border-indigo-400/50 flex items-center justify-center gap-2 font-medium transition-all duration-200;
 }

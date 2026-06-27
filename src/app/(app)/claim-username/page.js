@@ -1,6 +1,6 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import UsernameFormWrapper from "@/components/forms/UsernameFormWrapper";
-import { Page } from "@/models/page";
+import UsernameFormWrapper from "@/components/features/portfolio/page-forms/UsernameFormWrapper";
+import { Page } from "@/models/Page";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -8,9 +8,14 @@ import { redirect } from "next/navigation";
 export default async function ClaimUsernamePage({ searchParams }) {
   const session = await getServerSession(authOptions);
 
+  // The query param can arrive as a string or an array (?x=a&x=b) — keep the first value
   const rawDesiredUsername = searchParams?.desiredUsername;
-  const desiredUsername = rawDesiredUsername ?
-    (Array.isArray(rawDesiredUsername) ? rawDesiredUsername[0] : String(rawDesiredUsername)) : '';
+  let desiredUsername = '';
+  if (Array.isArray(rawDesiredUsername)) {
+    desiredUsername = rawDesiredUsername[0];
+  } else if (rawDesiredUsername) {
+    desiredUsername = String(rawDesiredUsername);
+  }
 
   if (!session) {
     return redirect('/');
@@ -38,20 +43,20 @@ export default async function ClaimUsernamePage({ searchParams }) {
   };
 
   return (
-    <div className="bg-slate-50 py-6 px-4 w-full min-h-[calc(100vh-64px)]">
+    <div className="bg-slate-50 dark:bg-slate-900 transition-colors duration-300 py-6 px-4 w-full min-h-[calc(100vh-64px)]">
       <div className="w-full max-w-2xl mx-auto space-y-6">
         {/* Header Section */}
         <div className="text-center py-4">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 dark:text-indigo-400 text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wider">
             Step 1 of 1
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 tracking-tight">Claim Your Username</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">Claim Your Username</h1>
           {pageProps.desiredUsername ? (
-            <p className="text-gray-500 text-base">
-              You want to claim: <strong className="text-indigo-600 font-semibold">linkto/{pageProps.desiredUsername}</strong>
+            <p className="text-gray-500 dark:text-slate-400 text-base">
+              You want to claim: <strong className="text-indigo-600 dark:text-indigo-400 font-semibold">linkto/{pageProps.desiredUsername}</strong>
             </p>
           ) : (
-            <p className="text-gray-500 text-base">
+            <p className="text-gray-500 dark:text-slate-400 text-base">
               Choose your unique username to get started
             </p>
           )}

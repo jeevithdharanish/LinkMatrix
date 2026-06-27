@@ -1,49 +1,35 @@
-import { Page } from "@/models/page";
+import { Page } from "@/models/Page";
 import { User } from "@/models/User";
 import { WorkExperience } from "@/models/WorkExperience";
 import { Education } from "@/models/Education";
 import { Project } from "@/models/Project";
 import { Event } from "@/models/Event";
-import { connectToDatabase } from "@/libs/mongoClient";
+import { connectToDatabase } from "@/lib/mongoClient";
+import { getVisitorMeta, isBot, refTagToReferrer } from "@/lib/track";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from "next-auth";
 import { unstable_cache } from "next/cache";
+import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faGithub, faLinkedin } from "@fortawesome/free-brands-svg-icons";
 import {
-  faDiscord, faFacebook, faGithub, faInstagram, faTelegram,
-  faTiktok, faWhatsapp, faYoutube, faLinkedin
-} from "@fortawesome/free-brands-svg-icons";
-import {
-  faEnvelope, faLink, faLocationDot, faMobile, faFileAlt, faCode,
-  faArrowUpRightFromSquare, faShareNodes, faDownload, faArrowDown,
-  faHeart, faCopyright, faChevronUp, faGlobe
+  faEnvelope, faLink, faLocationDot,
+  faArrowUpRightFromSquare, faDownload, faArrowDown,
+  faHeart, faChevronUp, faGlobe
 } from "@fortawesome/free-solid-svg-icons";
-import SummarySection from "@/components/profile/SummarySection";
-import SkillsSection from "@/components/profile/SkillsSection";
-import WorkExperienceSection from "@/components/profile/WorkExperienceSection";
-import EducationSection from "@/components/profile/EducationSection";
-import ProjectSection from "@/components/profile/ProjectSection";
+import { buttonsIcons, buttonLink } from "@/lib/socialButtons";
+import { clickPingUrl, normalizeBaseUrl } from "@/lib/urlHelpers";
+import SummarySection from "@/components/features/portfolio/page-sections/SummarySection";
+import SkillsSection from "@/components/features/portfolio/page-sections/SkillsSection";
+import WorkExperienceSection from "@/components/features/portfolio/page-sections/WorkExperienceSection";
+import EducationSection from "@/components/features/portfolio/page-sections/EducationSection";
+import ProjectSection from "@/components/features/portfolio/page-sections/ProjectSection";
 import ParticleNetwork from "@/components/animations/ParticleNetwork";
 import ScrollReveal from "@/components/animations/ScrollReveal";
-
-// Unicode-safe base64 encoder producing URL-safe output
-function safeBase64Encode(str) {
-  try {
-    return btoa(unescape(encodeURIComponent(str)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-  } catch {
-    return encodeURIComponent(str);
-  }
-}
-
-// Normalize a base URL to always end with a trailing slash
-function normalizeBaseUrl(url) {
-  if (!url) return '/';
-  return url.endsWith('/') ? url : url + '/';
-}
+import Typewriter from "@/components/animations/Typewriter";
 
 // Cache page data for 60 seconds — key includes uri for per-page isolation
 const getCachedPageData = unstable_cache(
@@ -72,7 +58,14 @@ export async function generateMetadata({ params }) {
     const description = page.bio || page.summary?.slice(0, 160) || `Check out ${page.displayName}'s professional portfolio`;
     const imageUrl = page.profileImage || '/profile.jpg';
 
+    // Absolute base for OG/twitter URLs (relative URLs resolve against this)
+    let metadataBase;
+    try {
+      metadataBase = new URL(process.env.URL);
+    } catch { }
+
     return {
+      ...(metadataBase ? { metadataBase } : {}),
       title,
       description,
       keywords: ['portfolio', 'developer', page.displayName, 'resume', 'projects'].filter(Boolean),
@@ -99,22 +92,6 @@ export async function generateMetadata({ params }) {
   }
 }
 
-export const buttonsIcons = {
-  email: faEnvelope,
-  mobile: faMobile,
-  instagram: faInstagram,
-  facebook: faFacebook,
-  linkedin: faLinkedin,
-  youtube: faYoutube,
-  github: faGithub,
-  geeksforgeeks: faCode,
-  resume: faFileAlt,
-  discord: faDiscord,
-  tiktok: faTiktok,
-  whatsapp: faWhatsapp,
-  telegram: faTelegram,
-};
-
 // Fallback icon when a button key is not in buttonsIcons
 const fallbackIcon = faGlobe;
 
@@ -135,14 +112,9 @@ const buttonStyles = {
   telegram: { bg: "bg-sky-500", hover: "hover:bg-sky-600" },
 };
 
-function buttonLink(key, value) {
-  if (key === 'mobile') return 'tel:' + value;
-  if (key === 'email') return 'mailto:' + value;
-  return value;
-}
-
-export default async function UserPage({ params }) {
+export default async function UserPage({ params, searchParams }) {
   const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
   const uri = resolvedParams.uri;
   const baseUrl = normalizeBaseUrl(process.env.URL || "");
 
@@ -169,16 +141,24 @@ export default async function UserPage({ params }) {
     const serializedProjects = JSON.parse(JSON.stringify(projects));
     const serializedWorkExperience = JSON.parse(JSON.stringify(workExperience));
 
-    // Track page view - non-blocking (don't await)
-    Event.create({ uri: uri, page: uri, type: 'view' }).catch(() => { });
+    // Track page view - non-blocking (don't await).
+    // Skips link-preview bots; the owner's own visits are stored but flagged.
+    const visitorMeta = getVisitorMeta(headers());
+    // An explicit ?ref= tag beats the Referer header (which many apps strip)
+    const refReferrer = refTagToReferrer(resolvedSearchParams?.ref);
+    if (refReferrer) visitorMeta.referrer = refReferrer;
+    if (!isBot(visitorMeta.userAgent)) {
+      const session = await getServerSession(authOptions).catch(() => null);
+      const isOwner = session?.user?.email === pageData.owner;
+      Event.create({ uri: uri, page: uri, type: 'view', ...visitorMeta, isOwner }).catch(() => { });
+    }
 
-    // Build a shallow copy with sorted buttons — never mutate cached pageData
-    const sortedButtons = Object.keys(pageData.buttons || {})
-      .sort()
-      .reduce((obj, key) => {
-        obj[key] = pageData.buttons[key];
-        return obj;
-      }, {});
+    // Build a shallow copy with alphabetically sorted buttons — never mutate cached pageData
+    const sortedButtonKeys = Object.keys(pageData.buttons || {}).sort();
+    const sortedButtons = {};
+    for (const key of sortedButtonKeys) {
+      sortedButtons[key] = pageData.buttons[key];
+    }
     const page = { ...pageData, buttons: sortedButtons };
 
     const backgroundStyle =
@@ -186,12 +166,30 @@ export default async function UserPage({ params }) {
         ? { backgroundColor: page.bgColor }
         : { backgroundImage: `url(${page.bgImage})` };
 
-    // Get resume link if available (supports both URL and public folder path)
+    // Resume button only shows when the user explicitly set a resume URL
     const resumeLink = page.buttons?.resume || '/RESUME.pdf';
-    const hasResume = page.buttons?.resume || false; // Only show if explicitly set
+    const hasResume = !!page.buttons?.resume;
+
+    // Structured data so search engines understand this is a person's profile
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Person',
+      name: page.displayName || page.uri,
+      url: `${baseUrl}${page.uri}`,
+      ...(page.bio ? { description: page.bio } : {}),
+      ...(page.profileImage ? { image: page.profileImage } : {}),
+      ...(page.location ? { address: page.location } : {}),
+      sameAs: Object.entries(page.buttons || {})
+        .filter(([key, value]) => value && !['email', 'mobile', 'resume'].includes(key))
+        .map(([, value]) => value),
+    };
 
     return (
       <div className="bg-slate-950 text-white min-h-screen overflow-x-hidden">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
 
         {/* === HERO SECTION - Split Layout === */}
         <section className="relative min-h-screen flex">
@@ -254,13 +252,15 @@ export default async function UserPage({ params }) {
                 </div>
               </div>
 
-              {/* Greeting */}
-              <div className="mb-6">
-                <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium">
-                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                  Available for opportunities
-                </span>
-              </div>
+              {/* Greeting — badge can be turned off in account settings */}
+              {page.showAvailableBadge !== false && (
+                <div className="mb-6">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium">
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    Available for opportunities
+                  </span>
+                </div>
+              )}
 
               {/* Name */}
               <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 leading-tight">
@@ -272,8 +272,18 @@ export default async function UserPage({ params }) {
 
               {/* Bio/Title */}
               {page.bio && (
-                <p className="text-lg md:text-xl lg:text-2xl text-slate-400 mb-8 leading-relaxed max-w-xl">
-                  {page.bio}
+                <p className="text-lg md:text-xl lg:text-2xl text-slate-400 mb-8 leading-relaxed max-w-xl min-h-[1.75em]">
+                  <Typewriter
+                    words={(() => {
+                      const list = page.bio.split(/[,;|]/).map(s => s.trim()).filter(Boolean);
+                      if (list.length === 1 && list[0].toLowerCase() === 'software developer') {
+                        return ['software developer', 'mern stack developer', 'problem solver', 'frontend engineer'];
+                      }
+                      return list;
+                    })()}
+                    speed={80}
+                    delay={2500}
+                  />
                 </p>
               )}
 
@@ -292,6 +302,7 @@ export default async function UserPage({ params }) {
                     href={resumeLink}
                     target="_blank"
                     download
+                    ping={clickPingUrl(baseUrl, page.uri, resumeLink, 'social')}
                     className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105"
                   >
                     <FontAwesomeIcon icon={faDownload} className="w-5 h-5 group-hover:animate-bounce" />
@@ -308,7 +319,7 @@ export default async function UserPage({ params }) {
                   <div className="flex flex-wrap gap-3">
                     {Object.keys(page.buttons).map((buttonKey) => {
                       const url = buttonLink(buttonKey, page.buttons[buttonKey]);
-                      const pingUrl = `${baseUrl}api/click?url=${safeBase64Encode(url)}&page=${page.uri}&clickType=social`;
+                      const pingUrl = clickPingUrl(baseUrl, page.uri, url, 'social');
                       const style = buttonStyles[buttonKey] || { bg: "bg-blue-500", hover: "hover:bg-blue-600" };
                       const icon = buttonsIcons[buttonKey] || fallbackIcon;
 
@@ -359,18 +370,49 @@ export default async function UserPage({ params }) {
             </section>
           )}
 
+          {/* Experience Section */}
+          {serializedWorkExperience?.length > 0 && (
+            <section id="experience" className="py-24 bg-slate-950">
+              <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                <WorkExperienceSection workExperience={serializedWorkExperience} />
+              </div>
+            </section>
+          )}
+
+          {/* Projects Section */}
+          {serializedProjects?.length > 0 && (
+            <section id="projects" className="py-24 bg-slate-900/50">
+              <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                <ProjectSection
+                  projects={serializedProjects}
+                  baseUrl={baseUrl}
+                  pageUri={page.uri}
+                />
+              </div>
+            </section>
+          )}
+
+          {/* Skills Section */}
+          {page.skills && Object.keys(page.skills).length > 0 && (
+            <section id="skills" className="py-24 bg-slate-950">
+              <div className="max-w-6xl mx-auto px-6 lg:px-8">
+                <SkillsSection skills={page.skills} />
+              </div>
+            </section>
+          )}
+
           {/* Education Section */}
           {serializedEducation?.length > 0 && (
-            <section id="education" className="py-24 bg-slate-950">
+            <section id="education" className="py-24 bg-slate-900/50">
               <div className="max-w-6xl mx-auto px-6 lg:px-8">
                 <EducationSection education={serializedEducation} />
               </div>
             </section>
           )}
 
-          {/* Featured Links Section - Moved up */}
+          {/* Featured Links Section */}
           {(page.links || []).length > 0 && (
-            <section id="links" className="py-24 bg-slate-900/50">
+            <section id="links" className="py-24 bg-slate-950">
               <div className="max-w-4xl mx-auto px-6 lg:px-8">
                 <ScrollReveal animation="fade-up">
                   <div className="text-center mb-12">
@@ -396,7 +438,7 @@ export default async function UserPage({ params }) {
                       <Link
                         target="_blank"
                         rel="noopener noreferrer"
-                        ping={`${baseUrl}api/click?url=${safeBase64Encode(link.url)}&page=${page.uri}&clickType=link`}
+                        ping={clickPingUrl(baseUrl, page.uri, link.url, 'link')}
                         className="group flex items-center gap-4 p-5 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl hover:bg-slate-800 hover:border-cyan-500/50 transition-all duration-300 hover:-translate-y-1"
                         href={link.url}
                       >
@@ -438,37 +480,6 @@ export default async function UserPage({ params }) {
             </section>
           )}
 
-          {/* Skills Section */}
-          {page.skills && Object.keys(page.skills).length > 0 && (
-            <section id="skills" className="py-24 bg-slate-950">
-              <div className="max-w-6xl mx-auto px-6 lg:px-8">
-                <SkillsSection skills={page.skills} />
-              </div>
-            </section>
-          )}
-
-          {/* Projects Section */}
-          {serializedProjects?.length > 0 && (
-            <section id="projects" className="py-24 bg-slate-900/50">
-              <div className="max-w-6xl mx-auto px-6 lg:px-8">
-                <ProjectSection
-                  projects={serializedProjects}
-                  baseUrl={baseUrl}
-                  pageUri={page.uri}
-                />
-              </div>
-            </section>
-          )}
-
-          {/* Experience Section */}
-          {serializedWorkExperience?.length > 0 && (
-            <section id="experience" className="py-24 bg-slate-950">
-              <div className="max-w-6xl mx-auto px-6 lg:px-8">
-                <WorkExperienceSection workExperience={serializedWorkExperience} />
-              </div>
-            </section>
-          )}
-
           {/* Contact Section */}
           <section id="contact" className="py-24 bg-gradient-to-b from-slate-900/50 to-slate-950">
             <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
@@ -486,6 +497,7 @@ export default async function UserPage({ params }) {
                   {page.buttons?.email && (
                     <Link
                       href={`mailto:${page.buttons.email}`}
+                      ping={clickPingUrl(baseUrl, page.uri, `mailto:${page.buttons.email}`, 'social')}
                       className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105"
                     >
                       <FontAwesomeIcon icon={faEnvelope} className="w-5 h-5" />
@@ -497,6 +509,7 @@ export default async function UserPage({ params }) {
                       href={page.buttons.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
+                      ping={clickPingUrl(baseUrl, page.uri, page.buttons.linkedin, 'social')}
                       className="inline-flex items-center gap-3 px-8 py-4 bg-blue-700 text-white rounded-full font-semibold text-lg hover:bg-blue-800 transition-all duration-300 shadow-lg hover:scale-105"
                     >
                       <FontAwesomeIcon icon={faLinkedin} className="w-5 h-5" />
@@ -508,6 +521,7 @@ export default async function UserPage({ params }) {
                       href={page.buttons.github}
                       target="_blank"
                       rel="noopener noreferrer"
+                      ping={clickPingUrl(baseUrl, page.uri, page.buttons.github, 'social')}
                       className="inline-flex items-center gap-3 px-8 py-4 bg-slate-800 border border-slate-700 text-white rounded-full font-semibold text-lg hover:bg-slate-700 transition-all duration-300 hover:scale-105"
                     >
                       <FontAwesomeIcon icon={faGithub} className="w-5 h-5" />

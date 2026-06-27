@@ -1,19 +1,19 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import PageButtonsForm from "@/components/forms/PageButtonsForm";
-import PageWorkExperienceForm from "@/components/forms/PageWorkExperienceForm";
-import PageLinksForm from "@/components/forms/PageLinksForm";
-import PageSettingsForm from "@/components/forms/PageSettingsForm";
+import PageButtonsForm from "@/components/features/portfolio/page-forms/PageButtonsForm";
+import PageWorkExperienceForm from "@/components/features/portfolio/page-forms/PageWorkExperienceForm";
+import PageLinksForm from "@/components/features/portfolio/page-forms/PageLinksForm";
+import PageSettingsForm from "@/components/features/portfolio/page-forms/PageSettingsForm";
 import { WorkExperience } from "@/models/WorkExperience";
-import { connectToDatabase } from "@/libs/mongoClient";
+import { connectToDatabase } from "@/lib/mongoClient";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import PageSummaryForm from "@/components/forms/PageSummaryForm";
-import PageSkillsForm from "@/components/forms/PageSkillsForm";
-import PageEducationForm from "@/components/forms/PageEducationForm";
+import PageSummaryForm from "@/components/features/portfolio/page-forms/PageSummaryForm";
+import PageSkillsForm from "@/components/features/portfolio/page-forms/PageSkillsForm";
+import PageEducationForm from "@/components/features/portfolio/page-forms/PageEducationForm";
 import { Education } from "@/models/Education";
-import { Page } from "@/models/page";
+import { Page } from "@/models/Page";
 import { Project } from "@/models/Project";
-import PageProjectForm from "@/components/forms/PageProjectForm";
+import PageProjectForm from "@/components/features/portfolio/page-forms/PageProjectForm";
 import AccountHeader from "@/components/layout/AccountHeader";
 
 export default async function AccountPage({ searchParams }) {

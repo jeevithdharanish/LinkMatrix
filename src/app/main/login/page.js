@@ -1,6 +1,6 @@
 
 'use client';
-import LoginWithGoogle from "@/components/buttons/LoginWithGoogle";
+import LoginWithGoogle from "@/components/ui/LoginWithGoogle";
 
 export default function LoginPage({ searchParams }) {
   const desiredUsername = searchParams?.username;

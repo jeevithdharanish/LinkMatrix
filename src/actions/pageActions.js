@@ -1,10 +1,10 @@
 'use server';
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { Page } from "@/models/page";
+import { Page } from "@/models/Page";
 import { DeletedLink } from "@/models/DeletedLink";
 import { Event } from "@/models/Event";
 import { User } from "@/models/User";
-import { connectToDatabase } from "@/libs/mongoClient";
+import { connectToDatabase } from "@/lib/mongoClient";
 import { getServerSession } from "next-auth";
 import { Education } from "@/models/Education";
 import { WorkExperience } from "@/models/WorkExperience";
@@ -41,6 +41,13 @@ function sanitizeUrl(url) {
   return '';
 }
 
+// Clamp a proficiency value to 0-100, defaulting to 80 when missing/invalid
+function normalizeProficiency(value) {
+  const parsed = parseInt(value, 10);
+  if (Number.isNaN(parsed)) return 80;
+  return Math.min(100, Math.max(0, parsed));
+}
+
 // Helper to sanitize skills data (categorized objects or arrays)
 function sanitizeSkillsData(skillsData) {
   if (skillsData === null || skillsData === undefined) return {};
@@ -52,7 +59,7 @@ function sanitizeSkillsData(skillsData) {
         .slice(0, 50)
         .map(skill => ({
           name: sanitizeString(typeof skill === 'string' ? skill : (skill?.name || ''), 100),
-          proficiency: (() => { const p = parseInt(skill?.proficiency, 10); return Math.min(100, Math.max(0, Number.isNaN(p) ? 80 : p)); })(),
+          proficiency: normalizeProficiency(skill?.proficiency),
         }))
         .filter(s => s.name.length > 0),
     };
@@ -71,7 +78,7 @@ function sanitizeSkillsData(skillsData) {
         .slice(0, 50)
         .map(item => ({
           name: sanitizeString(typeof item === 'string' ? item : (item?.name || ''), 100),
-          proficiency: (() => { const p = parseInt(item?.proficiency, 10); return Math.min(100, Math.max(0, Number.isNaN(p) ? 80 : p)); })(),
+          proficiency: normalizeProficiency(item?.proficiency),
         }))
         .filter(s => s.name.length > 0);
     }
@@ -107,6 +114,10 @@ export async function savePageSettings(formData) {
           dataToUpdate[key] = value;
         }
       }
+    }
+
+    if (formData.has('showAvailableBadge')) {
+      dataToUpdate.showAvailableBadge = formData.get('showAvailableBadge') === 'true';
     }
 
     await Page.updateOne(
@@ -231,7 +242,8 @@ export async function savePageLinks(links) {
   }
 }
 
-export async function savePageEducation(uri, educationData) {
+// Generic transactional handler for sub-collection clean-sweeps & bulk insertions
+async function saveCollectionData({ uri, rawData, Model, mapper }) {
   await connectToDatabase();
 
   const session = await getServerSession(authOptions);
@@ -241,7 +253,7 @@ export async function savePageEducation(uri, educationData) {
 
   const userEmail = session.user.email;
 
-  if (!uri || !Array.isArray(educationData)) {
+  if (!uri || !Array.isArray(rawData)) {
     return { success: false, message: 'Invalid data provided.' };
   }
 
@@ -249,24 +261,19 @@ export async function savePageEducation(uri, educationData) {
   try {
     dbSession.startTransaction();
 
-    await Education.deleteMany({
+    await Model.deleteMany({
       owner: userEmail,
       pageUri: uri,
     }, { session: dbSession });
 
-    const educationDocsToInsert = educationData.map(eduItem => ({
-      school: sanitizeString(eduItem.school, 200),
-      degree: sanitizeString(eduItem.degree, 200),
-      start: sanitizeString(eduItem.start, 50),
-      end: sanitizeString(eduItem.end, 50),
-      cgpa: sanitizeString(eduItem.cgpa || '', 20),
-      description: sanitizeString(eduItem.description, 2000),
+    const docsToInsert = rawData.map(item => ({
+      ...mapper(item),
       owner: userEmail,
       pageUri: uri,
     }));
 
-    if (educationDocsToInsert.length > 0) {
-      await Education.insertMany(educationDocsToInsert, { session: dbSession });
+    if (docsToInsert.length > 0) {
+      await Model.insertMany(docsToInsert, { session: dbSession });
     }
 
     await dbSession.commitTransaction();
@@ -274,11 +281,27 @@ export async function savePageEducation(uri, educationData) {
 
   } catch (error) {
     await dbSession.abortTransaction();
-    console.error('Error saving education:', error);
+    console.error(`Error saving ${Model.modelName || 'collection'}:`, error);
     return { success: false, message: error.message };
   } finally {
     dbSession.endSession();
   }
+}
+
+export async function savePageEducation(uri, educationData) {
+  return saveCollectionData({
+    uri,
+    rawData: educationData,
+    Model: Education,
+    mapper: (item) => ({
+      school: sanitizeString(item.school, 200),
+      degree: sanitizeString(item.degree, 200),
+      start: sanitizeString(item.start, 50),
+      end: sanitizeString(item.end, 50),
+      cgpa: sanitizeString(item.cgpa || '', 20),
+      description: sanitizeString(item.description, 2000),
+    }),
+  });
 }
 
 // Updated to support categorized skills with proficiency
@@ -320,51 +343,18 @@ export async function savePageSkills(uri, skillsData) {
 }
 
 export async function savePageWorkExperience(uri, workData) {
-  await connectToDatabase();
-
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return { success: false, message: 'Unauthorized' };
-  }
-  const userEmail = session.user.email;
-
-  if (!uri || !Array.isArray(workData)) {
-    return { success: false, message: 'Invalid data provided.' };
-  }
-
-  const dbSession = await mongoose.startSession();
-  try {
-    dbSession.startTransaction();
-
-    await WorkExperience.deleteMany({
-      owner: userEmail,
-      pageUri: uri,
-    }, { session: dbSession });
-
-    const workDocsToInsert = workData.map(item => ({
+  return saveCollectionData({
+    uri,
+    rawData: workData,
+    Model: WorkExperience,
+    mapper: (item) => ({
       company: sanitizeString(item.company, 200),
       role: sanitizeString(item.role, 200),
       start: sanitizeString(item.start, 50),
       end: sanitizeString(item.end, 50),
       bullets: (item.bullets || []).map(b => sanitizeString(b, 500)).slice(0, 20),
-      owner: userEmail,
-      pageUri: uri,
-    }));
-
-    if (workDocsToInsert.length > 0) {
-      await WorkExperience.insertMany(workDocsToInsert, { session: dbSession });
-    }
-
-    await dbSession.commitTransaction();
-    return { success: true };
-
-  } catch (error) {
-    await dbSession.abortTransaction();
-    console.error('Error saving work experience:', error);
-    return { success: false, message: error.message };
-  } finally {
-    dbSession.endSession();
-  }
+    }),
+  });
 }
 
 export async function savePageSummary(uri, summary) {
@@ -399,50 +389,17 @@ export async function savePageSummary(uri, summary) {
 }
 
 export async function savePageProject(uri, projectData) {
-  await connectToDatabase();
-
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return { success: false, message: 'Unauthorized' };
-  }
-  const userEmail = session.user.email;
-
-  if (!uri || !Array.isArray(projectData)) {
-    return { success: false, message: 'Invalid data provided.' };
-  }
-
-  const dbSession = await mongoose.startSession();
-  try {
-    dbSession.startTransaction();
-
-    await Project.deleteMany({
-      owner: userEmail,
-      pageUri: uri,
-    }, { session: dbSession });
-
-    const projectDocsToInsert = projectData.map(item => ({
+  return saveCollectionData({
+    uri,
+    rawData: projectData,
+    Model: Project,
+    mapper: (item) => ({
       title: sanitizeString(item.title, 200),
       techStacks: sanitizeString(item.techStacks, 500),
       timeTaken: sanitizeString(item.timeTaken, 100),
       summary: sanitizeString(item.summary, 3000),
       githubLink: sanitizeUrl(item.githubLink),
       liveLink: sanitizeUrl(item.liveLink),
-      owner: userEmail,
-      pageUri: uri,
-    }));
-
-    if (projectDocsToInsert.length > 0) {
-      await Project.insertMany(projectDocsToInsert, { session: dbSession });
-    }
-
-    await dbSession.commitTransaction();
-    return { success: true };
-
-  } catch (error) {
-    await dbSession.abortTransaction();
-    console.error('Error saving projects:', error);
-    return { success: false, message: error.message };
-  } finally {
-    dbSession.endSession();
-  }
+    }),
+  });
 }
