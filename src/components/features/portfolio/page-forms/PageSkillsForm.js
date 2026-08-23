@@ -137,7 +137,7 @@ export default function PageSkillsForm({ page, initialSkills }) {
               onClick={() => setActiveCategory(cat.name)}
               className={`px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${activeCategory === cat.name
                 ? 'bg-brand-grad text-white shadow-md'
-                : 'bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-750 hover:text-gray-700'
+                : 'bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-700'
                 }`}
             >
               <FontAwesomeIcon icon={cat.icon} className="w-3 h-3" />
@@ -147,8 +147,8 @@ export default function PageSkillsForm({ page, initialSkills }) {
         </div>
 
         {/* Add New Skill */}
-        <div className="bg-gray-50/80 dark:bg-slate-850/80 rounded-xl p-4 mb-5 border border-gray-100 dark:border-slate-800">
-          <h3 className="font-medium text-gray-700 dark:text-slate-350 mb-3 text-sm">
+        <div className="bg-gray-50/80 dark:bg-slate-800/40 rounded-xl p-4 mb-5 border border-gray-100 dark:border-slate-800">
+          <h3 className="font-medium text-gray-700 dark:text-slate-300 mb-3 text-sm">
             Add to {activeCategory}
           </h3>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -186,12 +186,12 @@ export default function PageSkillsForm({ page, initialSkills }) {
 
         {/* Skills List for Current Category */}
         <div className="mb-5">
-          <h3 className="font-medium text-gray-700 dark:text-slate-350 mb-3 flex items-center gap-2 text-sm">
+          <h3 className="font-medium text-gray-700 dark:text-slate-300 mb-3 flex items-center gap-2 text-sm">
             <div className="w-6 h-6 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg flex items-center justify-center">
               <FontAwesomeIcon icon={activeCategoryConfig?.icon || faCode} className="text-indigo-500 dark:text-indigo-400 text-xs" />
             </div>
             {activeCategory}
-            <span className="text-xs font-normal text-gray-400 dark:text-slate-500 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-normal text-gray-400 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
               {currentCategorySkills.length}
             </span>
           </h3>
@@ -199,7 +199,7 @@ export default function PageSkillsForm({ page, initialSkills }) {
           {(() => {
             if (currentCategorySkills.length === 0) {
               return (
-                <div className="text-center py-6 text-sm text-gray-400 dark:text-slate-500 bg-gray-50 dark:bg-slate-850/55 rounded-xl border border-dashed border-gray-200 dark:border-slate-700">
+                <div className="text-center py-6 text-sm text-gray-400 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-200 dark:border-slate-700">
                   No skills added yet in this category.
                 </div>
               );
@@ -242,7 +242,7 @@ export default function PageSkillsForm({ page, initialSkills }) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-850 rounded-lg px-2 py-1">
+                      <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-800/80 rounded-lg px-2 py-1">
                         <input
                           type="range"
                           min="10"
@@ -272,8 +272,8 @@ export default function PageSkillsForm({ page, initialSkills }) {
         </div>
 
         {/* Summary of All Categories */}
-        <div className="bg-gray-50/80 dark:bg-slate-850/80 rounded-xl p-4 mb-5 border border-gray-100 dark:border-slate-800">
-          <h3 className="font-medium text-gray-700 dark:text-slate-350 mb-3 text-sm">All Categories</h3>
+        <div className="bg-gray-50/80 dark:bg-slate-800/40 rounded-xl p-4 mb-5 border border-gray-100 dark:border-slate-800">
+          <h3 className="font-medium text-gray-700 dark:text-slate-300 mb-3 text-sm">All Categories</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
             {CATEGORIES.map(cat => {
               const count = (skills[cat.name] || []).length;
@@ -296,7 +296,7 @@ export default function PageSkillsForm({ page, initialSkills }) {
           </div>
         </div>
 
-        <div className="border-t border-gray-100 dark:border-slate-800 dark:border-slate-800 pt-4">
+        <div className="border-t border-gray-100 dark:border-slate-800 pt-4">
           <SubmitButton
             disabled={isSaving}
             className="max-w-xs mx-auto">

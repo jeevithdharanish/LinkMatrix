@@ -66,39 +66,39 @@ export default function PageWorkExperienceForm({ page, user, initialWorkExperien
         <FormHeader title="Work Experience" description="Detail your career history, roles, and major achievements" icon={faBriefcase} />
         <div className="space-y-3">
           {items.length === 0 && (
-            <div className="text-sm text-gray-400 dark:text-slate-500 text-center py-6 bg-gray-50 dark:bg-slate-850 rounded-xl border border-dashed border-gray-200 dark:border-slate-700">
+            <div className="text-sm text-gray-400 dark:text-slate-400 text-center py-6 bg-gray-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-200 dark:border-slate-700/80">
               No work entries yet — click &ldquo;Add new&rdquo; to start.
             </div>
           )}
 
           {items.map((it, idx) => (
-            <div key={it.id} className="p-4 bg-gray-50/50 dark:bg-slate-850/50 rounded-xl border border-gray-200 dark:border-slate-750 hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200">
+            <div key={it.id} className="p-4 bg-gray-50/50 dark:bg-slate-800/40 rounded-xl border border-gray-200 dark:border-slate-700/80 hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200">
               <div className="flex gap-3 items-start">
                 <div className="flex-1 space-y-2">
                   <input
                     value={it.company}
                     onChange={(e) => updateItem(idx, { company: e.target.value })}
                     placeholder="Company (e.g., Acme Inc.)"
-                    className="w-full rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                   <input
                     value={it.role}
                     onChange={(e) => updateItem(idx, { role: e.target.value })}
                     placeholder="Role (e.g., Frontend Engineer)"
-                    className="w-full rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                   <div className="flex gap-2">
                     <input
                       value={it.start}
                       onChange={(e) => updateItem(idx, { start: e.target.value })}
                       placeholder="Start (e.g., Jan 2022)"
-                      className="rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white flex-1 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      className="rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white flex-1 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                     />
                     <input
                       value={it.end}
                       onChange={(e) => updateItem(idx, { end: e.target.value })}
                       placeholder="End (e.g., Present)"
-                      className="rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white w-40 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                      className="rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white w-40 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                     />
                   </div>
 
@@ -109,7 +109,7 @@ export default function PageWorkExperienceForm({ page, user, initialWorkExperien
                       value={(it.bullets || []).join("\n")}
                       onChange={(e) => setBullets(idx, e.target.value)}
                       placeholder={"• Built X\n• Improved Y by 30%"}
-                      className="w-full rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
+                      className="w-full rounded-xl px-3 py-2.5 border border-gray-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
                     />
                   </div>
                 </div>

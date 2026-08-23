@@ -77,13 +77,13 @@ export default function PageEducationForm({ page, initialEducation }) {
         {/* Education Items List */}
         <div className="space-y-3">
           {education.length === 0 && (
-            <div className="text-sm text-gray-400 dark:text-slate-500 text-center py-6 bg-gray-50 dark:bg-slate-850 rounded-xl border border-dashed border-gray-200 dark:border-slate-700">
+            <div className="text-sm text-gray-400 dark:text-slate-400 text-center py-6 bg-gray-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-gray-200 dark:border-slate-700/80">
               No education added yet.
             </div>
           )}
 
           {education.map((edu, idx) => (
-            <div key={edu._clientId} className="p-4 bg-gray-50/50 dark:bg-slate-850/50 rounded-xl border border-gray-200 dark:border-slate-750 hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200">
+            <div key={edu._clientId} className="p-4 bg-gray-50/50 dark:bg-slate-800/40 rounded-xl border border-gray-200 dark:border-slate-700/80 hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200">
               <div className="mb-3">
                 <label htmlFor={`school-${edu._clientId}`} className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1 uppercase tracking-wider">School / University</label>
                 <input
@@ -91,7 +91,7 @@ export default function PageEducationForm({ page, initialEducation }) {
                   value={edu.school || ''}
                   onChange={(e) => updateEdu(idx, "school", e.target.value)}
                   placeholder="e.g., MIT, Stanford University"
-                  className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700/80 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
               </div>
 
@@ -102,7 +102,7 @@ export default function PageEducationForm({ page, initialEducation }) {
                   value={edu.degree || ''}
                   onChange={(e) => updateEdu(idx, "degree", e.target.value)}
                   placeholder="e.g., B.Tech in Computer Science"
-                  className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                  className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700/80 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 />
               </div>
 
@@ -114,7 +114,7 @@ export default function PageEducationForm({ page, initialEducation }) {
                     value={edu.start || ''}
                     onChange={(e) => updateEdu(idx, "start", e.target.value)}
                     placeholder="e.g., 2020"
-                    className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700/80 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
                 <div>
@@ -124,7 +124,7 @@ export default function PageEducationForm({ page, initialEducation }) {
                     value={edu.end || ''}
                     onChange={(e) => updateEdu(idx, "end", e.target.value)}
                     placeholder="e.g., 2024 or Present"
-                    className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700/80 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
                 <div>
@@ -134,7 +134,7 @@ export default function PageEducationForm({ page, initialEducation }) {
                     value={edu.cgpa || ''}
                     onChange={(e) => updateEdu(idx, "cgpa", e.target.value)}
                     placeholder="e.g., 8.5/10"
-                    className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700/80 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                 </div>
               </div>
@@ -147,7 +147,7 @@ export default function PageEducationForm({ page, initialEducation }) {
                   onChange={(e) => updateEdu(idx, "description", e.target.value)}
                   placeholder="Relevant coursework, achievements, honors, activities..."
                   rows={3}
-                  className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
+                  className="w-full rounded-xl px-3 py-2.5 bg-white dark:bg-slate-800/80 border border-gray-200 dark:border-slate-700/80 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all resize-none"
                 />
               </div>
 

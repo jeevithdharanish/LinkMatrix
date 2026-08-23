@@ -25,8 +25,8 @@ export default function AppSidebar() {
                             key={item.href}
                             href={item.href}
                             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isActive
-                                    ? 'bg-white/10 text-white shadow-sm'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                                    ? 'bg-indigo-600/20 text-white border border-indigo-500/30 shadow-sm font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50'
                                 }`}
                         >
                             {isActive && (
@@ -39,11 +39,11 @@ export default function AppSidebar() {
                 })}
             </div>
 
-            <div className="mt-auto pt-6 space-y-1.5 border-t border-slate-700/50">
+            <div className="mt-auto pt-6 space-y-1.5 border-t border-zinc-800/80">
                 <ThemeToggle variant="sidebar" />
                 <Link
                     href="/main"
-                    className="flex items-center gap-3 text-sm text-slate-500 px-3 py-2.5 rounded-xl hover:text-slate-300 hover:bg-white/5 transition-all duration-200"
+                    className="flex items-center gap-3 text-sm text-zinc-400 px-3 py-2.5 rounded-xl hover:text-zinc-200 hover:bg-zinc-800/50 transition-all duration-200"
                 >
                     <FontAwesomeIcon icon={faArrowLeft} className="w-3.5 h-3.5" />
                     <span>Back to website</span>
@@ -51,7 +51,7 @@ export default function AppSidebar() {
 
                 <button
                     onClick={() => signOut()}
-                    className="flex items-center gap-3 w-full text-left text-sm text-slate-500 px-3 py-2.5 rounded-xl hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+                    className="flex items-center gap-3 w-full text-left text-sm text-zinc-400 px-3 py-2.5 rounded-xl hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
                 >
                     <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5 h-3.5" />
                     <span>Logout</span>

@@ -57,8 +57,8 @@ export default function PageButtonsForm({ user, page }) {
             const buttonValue = b.key in pageButtons ? pageButtons[b.key] : '';
 
             return (
-              <div key={b.key} className="mb-3 md:flex items-center p-4 border border-gray-200 dark:border-slate-700 rounded-xl hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200 bg-gray-50/50 dark:bg-slate-850/50">
-                <div className="w-48 flex h-full text-gray-700 dark:text-slate-350 p-1 gap-2.5 items-center">
+              <div key={b.key} className="mb-3 md:flex items-center p-4 border border-gray-200 dark:border-slate-700/80 rounded-xl hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all duration-200 bg-gray-50/50 dark:bg-slate-800/40">
+                <div className="w-48 flex h-full text-gray-700 dark:text-slate-300 p-1 gap-2.5 items-center">
                   <FontAwesomeIcon
                     icon={faGripLines}
                     className="cursor-grab text-gray-300 dark:text-slate-600 handle p-2 hover:text-gray-500 dark:hover:text-slate-400 transition-colors" />
@@ -74,13 +74,13 @@ export default function PageButtonsForm({ user, page }) {
                     name={b.key}
                     defaultValue={buttonValue}
                     type="text"
-                    className="border border-gray-200 dark:border-slate-700 rounded-xl p-2.5 w-full text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
+                    className="border border-gray-200 dark:border-slate-700/80 rounded-xl p-2.5 w-full text-sm bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                   />
                   <button
                     onClick={() => removeButton(b)}
                     type="button"
                     aria-label={`Remove ${upperFirst(b.label)} button`}
-                    className="py-2 px-3 bg-red-50 dark:bg-red-950/20 text-red-500 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 dark:hover:bg-red-900/40 transition-all duration-200 flex-shrink-0">
+                    className="py-2 px-3 bg-red-50 dark:bg-red-950/20 text-red-500 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/40 transition-all duration-200 flex-shrink-0">
                     <FontAwesomeIcon icon={faTrash} className="text-sm" />
                   </button>
                 </div>

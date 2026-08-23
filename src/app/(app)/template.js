@@ -35,11 +35,11 @@ export default async function AppTemplate({ children }) {
           },
         }}
       />
-      <main className="md:flex min-h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+      <main className="md:flex min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300">
         {/* Mobile Navigation Toggle */}
         <label
           htmlFor="navCb"
-          className="md:hidden fixed top-4 left-4 p-2.5 rounded-xl bg-slate-900 shadow-lg inline-flex items-center gap-2 cursor-pointer z-50 hover:bg-slate-800 transition-colors">
+          className="md:hidden fixed top-4 left-4 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 shadow-lg inline-flex items-center gap-2 cursor-pointer z-50 hover:bg-zinc-800 transition-colors">
           <FontAwesomeIcon icon={faBars} className="text-white text-sm" />
           <span className="text-xs font-medium text-slate-300">Menu</span>
         </label>
@@ -50,11 +50,11 @@ export default async function AppTemplate({ children }) {
         <label
           htmlFor="navCb"
           aria-label="Close navigation"
-          className="backdrop fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden opacity-0 invisible peer-checked:opacity-100 peer-checked:visible transition-all duration-300"
+          className="backdrop fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden opacity-0 invisible peer-checked:opacity-100 peer-checked:visible transition-all duration-300"
         ></label>
 
         {/* Sidebar */}
-        <aside className="bg-slate-900 peer-checked:left-0 w-64 p-5 pt-6 shadow-2xl fixed md:sticky md:top-0 md:h-screen -left-64 md:left-0 top-0 bottom-0 z-50 transition-all duration-300 ease-in-out flex flex-col sidebar-scroll overflow-y-auto">
+        <aside className="bg-slate-900 dark:bg-[#09090b] border-r border-gray-200/50 dark:border-zinc-800/80 peer-checked:left-0 w-64 p-5 pt-6 shadow-2xl fixed md:sticky md:top-0 md:h-screen -left-64 md:left-0 top-0 bottom-0 z-50 transition-all duration-300 ease-in-out flex flex-col sidebar-scroll overflow-y-auto">
           {/* Close button for mobile */}
           <label
             htmlFor="navCb"

@@ -7,8 +7,8 @@
   --primary-start: #6366f1;
   --primary-end: #8b5cf6;
   --bg-main: #f8fafc;
-  --sidebar-bg: #0f172a;
-  --sidebar-active: rgba(30, 41, 59, 0.6);
+  --sidebar-bg: #ffffff;
+  --sidebar-active: rgba(99, 102, 241, 0.08);
   --card-border: #e2e8f0;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
   --card-shadow-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
@@ -19,38 +19,61 @@
 }
 
 .dark {
-  --bg-main: #0b0f19;
+  --bg-main: #000000;
+  --sidebar-bg: #09090b;
+  --sidebar-active: rgba(99, 102, 241, 0.18);
   --card-border: rgba(255, 255, 255, 0.08);
-  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-  --card-shadow-hover: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --card-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.8);
+  --card-shadow-hover: 0 15px 35px 0 rgba(0, 0, 0, 0.95);
 }
 
 body {
   background-color: var(--bg-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  @apply transition-colors duration-300;
+  @apply transition-colors duration-300 text-slate-900 dark:text-slate-100;
 }
 
 /* === Modern Input Styles === */
 input[type="text"],
+input[type="email"],
+input[type="url"],
+input[type="number"],
+input[type="password"],
+select,
 textarea {
   @apply bg-white w-full block py-3 px-4 mb-2 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 transition-all duration-200;
 }
 
 .dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="url"],
+.dark input[type="number"],
+.dark input[type="password"],
+.dark select,
 .dark textarea {
-  @apply bg-slate-800/40 border-slate-700/60 text-white placeholder-slate-500 backdrop-blur-sm;
+  @apply bg-[#141417] border-zinc-800 text-white placeholder-zinc-500 backdrop-blur-sm;
 }
 
 input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+input[type="password"]:focus,
+select:focus,
 textarea:focus {
   @apply border-indigo-500 outline-none;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
 .dark input[type="text"]:focus,
+.dark input[type="email"]:focus,
+.dark input[type="url"]:focus,
+.dark input[type="number"]:focus,
+.dark input[type="password"]:focus,
+.dark select:focus,
 .dark textarea:focus {
+  @apply border-indigo-500/90;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
 }
 
@@ -59,16 +82,16 @@ label.input-label {
 }
 
 .dark label.input-label {
-  @apply text-slate-400;
+  @apply text-zinc-400;
 }
 
 /* === Radio Togglers === */
 .radio-togglers {
-  @apply p-1 bg-gray-100 inline-flex cursor-pointer rounded-xl transition-colors duration-200;
+  @apply p-1 bg-gray-100 dark:bg-[#121215] inline-flex cursor-pointer rounded-xl transition-colors duration-200 border border-gray-200/50 dark:border-zinc-800;
 }
 
 .dark .radio-togglers {
-  @apply bg-slate-850/60 border border-slate-800/50;
+  @apply bg-[#121215] border border-zinc-800;
 }
 
 .radio-togglers div {
@@ -76,7 +99,7 @@ label.input-label {
 }
 
 .dark .radio-togglers div {
-  @apply text-slate-400;
+  @apply text-zinc-400;
 }
 
 .radio-togglers input[type="radio"] {
@@ -88,7 +111,7 @@ label.input-label {
 }
 
 .dark .radio-togglers input[type="radio"]:checked+div {
-  @apply bg-slate-800 text-indigo-400 shadow-md;
+  @apply bg-zinc-800 text-indigo-400 shadow-md font-semibold;
 }
 
 /* === Sortable Ghost === */
@@ -134,11 +157,11 @@ input#navCb:checked~.backdrop {
 
 /* Glassmorphism theme cards */
 .glass {
-  @apply bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/30 dark:border-slate-800/30 shadow-sm transition-all duration-300;
+  @apply bg-white/70 dark:bg-[#0c0c0e]/90 backdrop-blur-xl border border-gray-200/80 dark:border-zinc-800/90 shadow-sm dark:shadow-2xl dark:shadow-black transition-all duration-300;
 }
 
 .glass-hover {
-  @apply hover:bg-white/60 dark:hover:bg-slate-900/60 hover:shadow-md hover:border-white/50 dark:hover:border-slate-700/50;
+  @apply hover:bg-white/90 dark:hover:bg-[#111114] hover:shadow-md dark:hover:shadow-black hover:border-gray-300 dark:hover:border-zinc-700/90;
 }
 
 
@@ -440,6 +463,17 @@ html {
 
 .dot-pulse {
   animation: dot-pulse 1.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Reduce motion for accessibility */

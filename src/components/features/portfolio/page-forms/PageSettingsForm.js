@@ -68,7 +68,7 @@ export default function PageSettingsForm({ page, user }) {
                 onChange={val => setBgType(val)}
               />
               {bgType === 'color' && (
-                <div className="bg-white dark:bg-slate-800/90 dark:bg-slate-800/90 border dark:border-slate-700/80 backdrop-blur-sm shadow-sm text-gray-700 dark:text-slate-250 p-3 mt-3 rounded-xl">
+                <div className="bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700/80 backdrop-blur-md shadow-md text-gray-700 dark:text-slate-200 p-3 mt-3 rounded-xl">
                   <div className="flex gap-2 justify-center items-center">
                     <span className="text-sm font-medium text-gray-700 dark:text-slate-200">Background color:</span>
                     <input
@@ -76,14 +76,14 @@ export default function PageSettingsForm({ page, user }) {
                       name="bgColor"
                       onChange={ev => setBgColor(ev.target.value)}
                       defaultValue={page.bgColor}
-                      className="w-8 h-8 rounded-lg cursor-pointer border-0"
+                      className="w-8 h-8 rounded-lg cursor-pointer border-0 bg-transparent"
                     />
                   </div>
                 </div>
               )}
               {bgType === 'image' && (
                 <div className="flex justify-center">
-                  <label className="bg-white dark:bg-slate-800/90 dark:bg-slate-850 backdrop-blur-sm shadow-sm px-4 py-2.5 mt-3 flex gap-2 rounded-xl cursor-pointer hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-800 border dark:border-slate-700 transition-colors">
+                  <label className="bg-white/90 dark:bg-slate-900/90 border border-gray-200 dark:border-slate-700/80 backdrop-blur-md shadow-md px-4 py-2.5 mt-3 flex gap-2 rounded-xl cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors">
                     <input type="hidden" name="bgImage" value={bgImage} />
                     <input
                       type="file"
@@ -109,7 +109,7 @@ export default function PageSettingsForm({ page, user }) {
               </div>
               <label
                 htmlFor="avatarIn"
-                className="absolute bottom-1 -right-1 bg-white dark:bg-slate-800 dark:bg-slate-800 p-2 rounded-full shadow-md border border-gray-100 dark:border-slate-700 aspect-square flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-750 transition-colors">
+                className="absolute bottom-1 -right-1 bg-white dark:bg-slate-800 p-2 rounded-full shadow-md border border-gray-100 dark:border-slate-700 aspect-square flex items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                 <FontAwesomeIcon size={'lg'} icon={faCloudArrowUp} className="text-indigo-500" />
               </label>
               <input onChange={handleAvatarImageChange} id="avatarIn" type="file" className="hidden" />
@@ -125,7 +125,7 @@ export default function PageSettingsForm({ page, user }) {
                 name="displayName"
                 defaultValue={page.displayName}
                 placeholder="John Doe"
-                className="w-full border border-gray-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl p-3 transition-all bg-white dark:bg-slate-800"
+                className="w-full border border-gray-200 dark:border-slate-700/80 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl p-3 transition-all bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white"
               />
             </div>
             <div>
@@ -136,7 +136,7 @@ export default function PageSettingsForm({ page, user }) {
                 name="location"
                 defaultValue={page.location}
                 placeholder="Somewhere in the world"
-                className="w-full border border-gray-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl p-3 transition-all bg-white dark:bg-slate-800"
+                className="w-full border border-gray-200 dark:border-slate-700/80 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl p-3 transition-all bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white"
               />
             </div>
             <div>
@@ -147,13 +147,13 @@ export default function PageSettingsForm({ page, user }) {
                 id="bioIn"
                 placeholder="Your bio goes here..."
                 rows={3}
-                className="w-full border border-gray-200 dark:border-slate-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl p-3 transition-all resize-none bg-white dark:bg-slate-800"
+                className="w-full border border-gray-200 dark:border-slate-700/80 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl p-3 transition-all resize-none bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white"
               />
             </div>
-            <div className="flex items-center justify-between border border-gray-200 rounded-xl p-3 bg-white dark:bg-slate-800">
+            <div className="flex items-center justify-between border border-gray-200 dark:border-slate-700/80 rounded-xl p-3.5 bg-white dark:bg-slate-800/80">
               <div>
                 <p className="text-sm font-medium text-gray-700 dark:text-slate-200">&quot;Available for opportunities&quot; badge</p>
-                <p className="text-xs text-gray-400 dark:text-slate-500">Shown at the top of your public page</p>
+                <p className="text-xs text-gray-400 dark:text-slate-400">Shown at the top of your public page</p>
               </div>
               <input type="hidden" name="showAvailableBadge" value={showAvailableBadge ? 'true' : 'false'} />
               <input

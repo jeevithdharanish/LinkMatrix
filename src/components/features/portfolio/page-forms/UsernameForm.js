@@ -29,10 +29,10 @@ export default function UsernameForm({ desiredUsername = '' }) {
           <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-white text-2xl font-bold">@</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-850 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Claim Your Username
           </h1>
-          <p className="text-gray-650 dark:text-slate-350">
+          <p className="text-gray-600 dark:text-slate-300">
             Choose a unique username for your profile
           </p>
         </div>

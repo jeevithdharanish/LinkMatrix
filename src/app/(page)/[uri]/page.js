@@ -185,7 +185,7 @@ export default async function UserPage({ params, searchParams }) {
     };
 
     return (
-      <div className="bg-slate-950 text-white min-h-screen overflow-x-hidden">
+      <div className="bg-black text-white min-h-screen overflow-x-hidden">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -197,8 +197,8 @@ export default async function UserPage({ params, searchParams }) {
           {/* LEFT SIDE - Profile Image (Full Height) */}
           <div className="hidden lg:block lg:w-1/2 xl:w-2/5 relative overflow-hidden">
             {/* Background gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/50 via-transparent to-slate-950 z-10"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black z-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10"></div>
 
             {/* Profile Image - Full Cover */}
             <div className="absolute inset-0">
@@ -213,7 +213,7 @@ export default async function UserPage({ params, searchParams }) {
             </div>
 
             {/* Decorative elements */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-slate-950 to-transparent z-10"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent z-10"></div>
             <div className="absolute top-10 left-10 w-20 h-20 border-l-2 border-t-2 border-blue-500/30 z-20"></div>
             <div className="absolute bottom-10 right-10 w-20 h-20 border-r-2 border-b-2 border-purple-500/30 z-20"></div>
           </div>
@@ -222,7 +222,7 @@ export default async function UserPage({ params, searchParams }) {
           <div className="w-full lg:w-1/2 xl:w-3/5 relative flex items-center">
             {/* Animated Background for right side */}
             <div className="absolute inset-0">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-black via-[#09090b] to-black"></div>
 
               {/* Particle Network Animation */}
               <ParticleNetwork className="opacity-60" />

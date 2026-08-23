@@ -40,9 +40,9 @@ export default function PageSummaryForm({ page, user }) {
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           placeholder="Write a short summary about yourself..."
-          className="w-full min-h-[120px] p-3 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all text-sm"
+          className="w-full min-h-[120px] p-3 border border-gray-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/80 text-gray-900 dark:text-white rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all text-sm"
         />
-        <div className="border-t border-gray-100 dark:border-slate-800 dark:border-slate-800 pt-4 mt-4">
+        <div className="border-t border-gray-100 dark:border-slate-800 pt-4 mt-4">
           <SubmitButton
             disabled={isSaving}
             className="max-w-xs mx-auto">

@@ -100,7 +100,7 @@ async function getAnalyticsRaw(page, ownerEmail) {
 
   const [
     allClicks, deletedLinks, groupedViews, projects,
-    visitorAgg, sourceAgg, geoAgg, deviceAgg, recentEvents,
+    visitorAgg, sourceAgg, geoAgg, deviceAgg, heatmapAgg, recentEvents,
   ] = await Promise.all([
     Event.find({ page: page.uri, type: 'click', ...notOwner }).lean(),
     DeletedLink.find({ pageUri: page.uri, owner: ownerEmail }).lean(),
@@ -111,8 +111,15 @@ async function getAnalyticsRaw(page, ownerEmail) {
     ]),
     Project.find({ owner: ownerEmail, pageUri: page.uri }).lean(),
     Event.aggregate([
-      { $match: trackedViews },
-      { $group: { _id: '$visitorHash', views: { $sum: 1 } } },
+      { $match: { page: page.uri, ...notOwner, ...tracked } },
+      { $sort: { createdAt: 1 } },
+      { $group: {
+          _id: '$visitorHash',
+          views: { $sum: { $cond: [{ $eq: ['$type', 'view'] }, 1, 0] } },
+          clicks: { $sum: { $cond: [{ $eq: ['$type', 'click'] }, 1, 0] } },
+          referrer: { $first: { $cond: [{ $eq: ['$type', 'view'] }, '$referrer', null] } },
+          clickedUris: { $push: { $cond: [{ $eq: ['$type', 'click'] }, '$uri', null] } }
+      } },
     ]),
     Event.aggregate([
       { $match: trackedViews },
@@ -120,11 +127,22 @@ async function getAnalyticsRaw(page, ownerEmail) {
     ]),
     Event.aggregate([
       { $match: trackedViews },
-      { $group: { _id: { country: '$country', city: '$city' }, count: { $sum: 1 } } },
+      { $group: { _id: { country: '$country', city: '$city', referrer: '$referrer' }, count: { $sum: 1 } } },
     ]),
     Event.aggregate([
       { $match: trackedViews },
       { $group: { _id: '$userAgent', count: { $sum: 1 } } },
+    ]),
+    Event.aggregate([
+      { $match: trackedViews },
+      { $project: {
+          dayOfWeek: { $dayOfWeek: { date: "$createdAt", timezone: "Asia/Kolkata" } },
+          hourOfDay: { $hour: { date: "$createdAt", timezone: "Asia/Kolkata" } }
+      }},
+      { $group: {
+          _id: { dayOfWeek: "$dayOfWeek", hourOfDay: "$hourOfDay" },
+          count: { $sum: 1 }
+      }}
     ]),
     Event.find({ page: page.uri, ...notOwner, ...tracked }).sort({ createdAt: -1 }).limit(60).lean(),
   ]);
@@ -169,13 +187,41 @@ async function getAnalyticsRaw(page, ownerEmail) {
 
   // All links ranked by clicks: active first, deleted appended after
   // (deleted links only count clicks made before their deletion)
+  
+  // Calculate Top Traffic Source per Link URL using visitor flow
+  const urlSourceCounts = new Map();
+  visitorAgg.forEach(v => {
+    if (v.clicks > 0 && v.clickedUris && v.clickedUris.length > 0) {
+      const src = sourceFromReferrer(v.referrer || '');
+      v.clickedUris.forEach(uri => {
+        if (!uri) return;
+        if (!urlSourceCounts.has(uri)) urlSourceCounts.set(uri, new Map());
+        const srcMap = urlSourceCounts.get(uri);
+        srcMap.set(src, (srcMap.get(src) || 0) + 1);
+      });
+    }
+  });
+
+  const getTopSource = (uri) => {
+    if (!urlSourceCounts.has(uri)) return null;
+    const srcMap = urlSourceCounts.get(uri);
+    let topSrc = null;
+    let max = -1;
+    for (const [src, count] of srcMap.entries()) {
+      if (count > max) { max = count; topSrc = src; }
+    }
+    return topSrc;
+  };
+
   const activeLinks = (page.links || []).map(link => ({
     title: link.title || 'Untitled Link',
     url: link.url,
     totalClicks: linkClickMaps.total.get(link.url) || 0,
     weekClicks: linkClickMaps.week.get(link.url) || 0,
+    topSource: getTopSource(link.url),
     isDeleted: false
   })).sort((a, b) => b.totalClicks - a.totalClicks);
+  
   const deletedLinksData = deletedLinks.map(link => {
     const clicksBeforeDeletion = linkClicks.filter(c =>
       c.uri === link.url && new Date(c.createdAt) <= new Date(link.deletedAt)
@@ -185,6 +231,7 @@ async function getAnalyticsRaw(page, ownerEmail) {
       url: link.url,
       totalClicks: clicksBeforeDeletion.length,
       weekClicks: clicksBeforeDeletion.filter(c => new Date(c.createdAt) >= sevenDaysAgo).length,
+      topSource: getTopSource(link.url),
       isDeleted: true
     };
   }).sort((a, b) => b.totalClicks - a.totalClicks);
@@ -207,10 +254,96 @@ async function getAnalyticsRaw(page, ownerEmail) {
   // Visitor insights (events captured since visitor tracking began)
   const uniqueVisitors = visitorAgg.length;
   const returningVisitors = visitorAgg.filter(v => v.views > 1).length;
-  const trafficSources = countBy(sourceAgg, s => sourceFromReferrer(s._id || ''));
+  const bouncedSessions = visitorAgg.filter(v => v.views > 0 && v.clicks === 0).length;
+  const bounceRate = uniqueVisitors > 0 ? ((bouncedSessions / uniqueVisitors) * 100).toFixed(1) : 0;
+
+  const lastSeenMap = new Map();
+  recentEvents.forEach(e => {
+    const src = sourceFromReferrer(e.referrer || '');
+    if (!lastSeenMap.has(src) || new Date(e.createdAt) > new Date(lastSeenMap.get(src))) {
+      lastSeenMap.set(src, e.createdAt);
+    }
+  });
+
+  const trafficSources = countBy(sourceAgg, s => sourceFromReferrer(s._id || '')).map(item => ({
+    ...item,
+    lastSeen: lastSeenMap.get(item.label) || null,
+  }));
   const totalSourceViews = trafficSources.reduce((acc, s) => acc + s.count, 0);
   const topLocations = countBy(geoAgg, g => locationLabel(g._id?.country, g._id?.city) || 'Unknown');
   const devices = countBy(deviceAgg, d => deviceFromUA(d._id || ''));
+
+  // Detailed Geographic Stats for World Map & City Breakdown
+  const countryMap = new Map();
+  const cityMap = new Map();
+
+  geoAgg.forEach(g => {
+    const code = (g._id?.country || 'UNKNOWN').toUpperCase();
+    const cName = locationLabel(g._id?.country, '') || 'Unknown';
+    const city = g._id?.city || '';
+    const fullLoc = locationLabel(g._id?.country, g._id?.city) || 'Unknown';
+    const src = sourceFromReferrer(g._id?.referrer || '');
+
+    // Country stats
+    if (!countryMap.has(code)) {
+      countryMap.set(code, { code, countryName: cName, views: 0, clicks: 0, sourceCounts: new Map() });
+    }
+    const cObj = countryMap.get(code);
+    cObj.views += g.count;
+    cObj.sourceCounts.set(src, (cObj.sourceCounts.get(src) || 0) + g.count);
+
+    // City stats
+    if (city) {
+      if (!cityMap.has(fullLoc)) {
+        cityMap.set(fullLoc, { locationName: fullLoc, city, code, views: 0, clicks: 0 });
+      }
+      const ctObj = cityMap.get(fullLoc);
+      ctObj.views += g.count;
+    }
+  });
+
+  // Count clicks per country and city
+  allClicks.forEach(c => {
+    const code = (c.country || 'UNKNOWN').toUpperCase();
+    if (countryMap.has(code)) {
+      countryMap.get(code).clicks += 1;
+    }
+    const fullLoc = locationLabel(c.country, c.city);
+    if (cityMap.has(fullLoc)) {
+      cityMap.get(fullLoc).clicks += 1;
+    }
+  });
+
+  const countryStats = [...countryMap.values()].map(c => {
+    let topSource = null;
+    let maxCount = -1;
+    for (const [src, count] of c.sourceCounts.entries()) {
+      if (count > maxCount) { maxCount = count; topSource = src; }
+    }
+    
+    // Clean up internal map
+    const { sourceCounts, ...rest } = c;
+    
+    return {
+      ...rest,
+      topSource,
+      ctr: c.views > 0 ? parseFloat(((c.clicks / c.views) * 100).toFixed(1)) : 0
+    };
+  }).sort((a, b) => b.views - a.views);
+
+  const cityStats = [...cityMap.values()].map(c => ({
+    ...c,
+    ctr: c.views > 0 ? parseFloat(((c.clicks / c.views) * 100).toFixed(1)) : 0
+  })).sort((a, b) => b.views - a.views);
+
+  const geoData = { countryStats, cityStats };
+
+  // Heatmap formatting (transform aggregation to simple objects)
+  const heatmapData = heatmapAgg.map(h => ({
+    dayOfWeek: h._id.dayOfWeek,
+    hourOfDay: h._id.hourOfDay,
+    count: h.count
+  }));
 
   // Friendly names for clicked URLs in the activity feed
   const urlLabels = new Map();
@@ -233,9 +366,11 @@ async function getAnalyticsRaw(page, ownerEmail) {
     clickRate, todayClickRate,
     socialClickMaps, projectClickMaps,
     linksPerformance, chartData,
-    uniqueVisitors, returningVisitors,
+    uniqueVisitors, returningVisitors, bounceRate,
     trafficSources, totalSourceViews, topLocations, devices,
     recentSessions,
+    geoData,
+    heatmapData,
   };
 }
 
